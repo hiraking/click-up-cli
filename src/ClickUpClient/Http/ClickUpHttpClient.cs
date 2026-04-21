@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using ClickUpClient.Mapping;
 using ClickUpClient.Models;
 using ClickUpClient.Raw;
@@ -19,6 +20,12 @@ public sealed class ClickUpHttpClient : IClickUpClient
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+    };
+
+    private static readonly JsonSerializerOptions CreateJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
     private readonly HttpClient _http;
@@ -68,6 +75,73 @@ public sealed class ClickUpHttpClient : IClickUpClient
             ?? throw new InvalidOperationException("API returned null response.");
 
         return TaskMapper.ToSummary(raw);
+    }
+
+    /// <inheritdoc/>
+    public async Task<TaskSummary> CreateTaskAsync(
+        string listId,
+        CreateTaskRequest request,
+        CancellationToken ct = default)
+    {
+        var url = $"v2/list/{listId}/task";
+        var body = MapToRawBody(request);
+        using var content = JsonContent.Create(body, options: CreateJsonOptions);
+
+        var response = await _http.PostAsync(url, content, ct).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+
+        var raw = await response.Content
+            .ReadFromJsonAsync<RawTask>(JsonOptions, ct)
+            .ConfigureAwait(false)
+            ?? throw new InvalidOperationException("API returned null response.");
+
+        return TaskMapper.ToSummary(raw);
+    }
+
+    private static RawCreateTaskBody MapToRawBody(CreateTaskRequest request)
+    {
+        long? dueDateMs = null;
+        bool? dueDateTimeFlag = null;
+        if (request.DueDate.HasValue)
+        {
+            dueDateMs = request.DueDate.Value.ToUnixTimeMilliseconds();
+            dueDateTimeFlag = request.DueDate.Value.TimeOfDay != TimeSpan.Zero;
+        }
+
+        long? startDateMs = null;
+        bool? startDateTimeFlag = null;
+        if (request.StartDate.HasValue)
+        {
+            startDateMs = request.StartDate.Value.ToUnixTimeMilliseconds();
+            startDateTimeFlag = request.StartDate.Value.TimeOfDay != TimeSpan.Zero;
+        }
+
+        int? timeEstimateMs = null;
+        if (request.TimeEstimate.HasValue)
+        {
+            var totalMilliseconds = request.TimeEstimate.Value.TotalMilliseconds;
+            if (totalMilliseconds < 0 || totalMilliseconds > int.MaxValue)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(request),
+                    "TimeEstimate must be between 0 and Int32.MaxValue milliseconds.");
+            }
+
+            timeEstimateMs = checked((int)totalMilliseconds);
+        }
+
+        return new RawCreateTaskBody
+        {
+            Name = request.Name,
+            Description = request.Description,
+            Status = request.Status,
+            Priority = request.Priority.HasValue ? (int)request.Priority.Value : null,
+            DueDate = dueDateMs,
+            DueDateTime = dueDateTimeFlag,
+            StartDate = startDateMs,
+            StartDateTime = startDateTimeFlag,
+            TimeEstimate = timeEstimateMs,
+        };
     }
 
     private static string BuildGetTasksUrl(

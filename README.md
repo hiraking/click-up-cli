@@ -1,6 +1,6 @@
 # ClickUp CLI
 
-ClickUp REST API v2 の薄い CLI ラッパー。AI エージェントやスクリプトから ClickUp タスクを JSON で取得するためのツール。
+ClickUp REST API v2 の薄い CLI ラッパー。AI エージェントやスクリプトから ClickUp タスクを JSON で取得・作成するためのツール。
 
 ## セットアップ
 
@@ -53,6 +53,8 @@ clickup get-tasks [options]
 
 **出力:** ルートタスクの JSON 配列。サブタスクは各タスクの `subtasks` フィールドにネスト。
 
+> **日付のタイムゾーンについて:** `--due-after` / `--due-before` にオフセットなしで渡した場合（例: `"2026-05-01"` や `"2026-05-01T09:00"`）は **JST (+09:00)** として扱われる。オフセットを明示した場合（例: `"2026-05-01T00:00:00Z"` や `"2026-05-01T09:00:00+09:00"`）はその値をそのまま使用する。
+
 #### 使用例
 
 ```powershell
@@ -77,6 +79,45 @@ clickup get-tasks --due-before 2026-04-20T00:00:00+09:00
 
 # サブタスクなしで取得
 clickup get-tasks --list work --no-subtasks
+```
+
+---
+
+### `create-task` — タスクを新規作成
+
+```
+clickup create-task <name> --list <name> [options]
+```
+
+| 引数/オプション | 型 | 説明 |
+|---|---|---|
+| `name` | string | タスク名（必須） |
+| `--list <name>` | string | 作成先リスト名（`config.json` の `lists` キー）（必須） |
+| `--description <text>` | string | タスクの説明 |
+| `--status <name>` | string | ステータス名（例: `"to do"`, `"in progress"`） |
+| `--priority <value>` | string | 優先度: `urgent` / `high` / `normal` / `low` |
+| `--due-date <ISO8601>` | string | 期日。時刻を含む場合は due_date_time=true として送信 |
+| `--start-date <ISO8601>` | string | 開始日。時刻を含む場合は start_date_time=true として送信 |
+| `--time-estimate <分>` | int | 見積もり時間（分単位） |
+
+**出力:** 作成されたタスクの JSON オブジェクト（`get-task` と同形式）。
+
+> **日付のタイムゾーンについて:** `--due-date` / `--start-date` にオフセットなしで渡した場合（例: `"2026-05-01"` や `"2026-05-01T09:00"`）は **JST (+09:00)** として扱われる。オフセットを明示した場合（例: `"2026-05-01T00:00:00Z"` や `"2026-05-01T09:00:00+09:00"`）はその値をそのまま使用する。
+
+#### 使用例
+
+```powershell
+# 最小構成（タスク名とリストのみ）
+clickup create-task "新しいタスク" --list work
+
+# オプション全指定
+clickup create-task "設計書を書く" --list work `
+  --description "アーキテクチャ設計書の作成" `
+  --status "to do" `
+  --priority high `
+  --due-date "2026-05-01" `
+  --start-date "2026-04-25T09:00" `
+  --time-estimate 120
 ```
 
 ---
@@ -134,6 +175,7 @@ clickup get-task 86exa7yq5
 | `config.json` が見つからない | `Error: config.json not found at '...'` |
 | 不明なリスト名 | `Error: Unknown list name 'foo'. Available: work, study, ...` |
 | 日付フォーマット不正 | `Error: '--due-after' value '...' is not a valid ISO 8601 datetime.` |
+| 不正な優先度 | `Error: Invalid priority 'foo'. Use urgent, high, normal, or low.` |
 | API エラー | `HTTP Error (404 NotFound): ...` |
 
 ---

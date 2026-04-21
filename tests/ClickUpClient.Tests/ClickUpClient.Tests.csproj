@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ClickUpClient\ClickUpClient.csproj" />
+    <ProjectReference Include="..\..\src\ClickUpCli\ClickUpCli.csproj" />
   </ItemGroup>
 
 </Project>

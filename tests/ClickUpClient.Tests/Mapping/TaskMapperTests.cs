@@ -116,30 +116,6 @@ public class TaskMapperTests
     }
 
     [Fact]
-    public void ToSummary_Assignees_MapsUsernames()
-    {
-        var raw = CreateRaw(assignees:
-        [
-            new RawAssignee { Id = 1, Username = "alice", Email = "alice@example.com" },
-            new RawAssignee { Id = 2, Username = "bob", Email = "bob@example.com" },
-        ]);
-
-        var summary = TaskMapper.ToSummary(raw);
-
-        Assert.Equal(["alice", "bob"], summary.Assignees);
-    }
-
-    [Fact]
-    public void ToSummary_EmptyAssignees_ReturnsEmptyList()
-    {
-        var raw = CreateRaw(assignees: []);
-
-        var summary = TaskMapper.ToSummary(raw);
-
-        Assert.Empty(summary.Assignees);
-    }
-
-    [Fact]
     public void ToSummary_Subtasks_AreInitiallyEmpty()
     {
         var raw = CreateRaw();

@@ -32,4 +32,16 @@ public interface IClickUpClient
     /// GET /v2/task/{taskId}
     /// </summary>
     Task<TaskSummary> GetTaskAsync(string taskId, CancellationToken ct = default);
+
+    /// <summary>
+    /// 指定したリストにタスクを新規作成する。
+    /// POST /v2/list/{listId}/task
+    /// </summary>
+    /// <param name="listId">タスクを作成するリスト ID</param>
+    /// <param name="request">作成パラメータ</param>
+    /// <param name="ct">キャンセルトークン</param>
+    Task<TaskSummary> CreateTaskAsync(
+        string listId,
+        CreateTaskRequest request,
+        CancellationToken ct = default);
 }

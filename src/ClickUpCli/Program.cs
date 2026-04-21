@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.Text.Json;
 using ClickUpClient;
 using ClickUpClient.Http;
+using ClickUpClient.Models;
 using ClickUpCli;
 
 var jsonOptions = new JsonSerializerOptions
@@ -72,8 +73,8 @@ getTasksCommand.SetHandler(async (string[] lists, string[] statuses, string? due
             }
         }
 
-        DateTimeOffset? dueAfter = dueAfterStr is not null ? ParseIsoDate(dueAfterStr, "--due-after") : null;
-        DateTimeOffset? dueBefore = dueBeforeStr is not null ? ParseIsoDate(dueBeforeStr, "--due-before") : null;
+        DateTimeOffset? dueAfter = dueAfterStr is not null ? ParseIsoDateOrExit(dueAfterStr, "--due-after") : null;
+        DateTimeOffset? dueBefore = dueBeforeStr is not null ? ParseIsoDateOrExit(dueBeforeStr, "--due-before") : null;
 
         using var httpClient = BuildHttpClient(config);
         IClickUpClient client = new ClickUpHttpClient(httpClient);
@@ -152,21 +153,151 @@ getTaskCommand.SetHandler(async (string taskId) =>
 
 rootCommand.AddCommand(getTaskCommand);
 
+// ── create-task ────────────────────────────────────────────────────────────
+var createNameArgument = new Argument<string>("name", "Task name");
+
+var createListOption = new Option<string>(
+    name: "--list",
+    description: "List name defined in config.json.")
+{ IsRequired = true };
+
+var createDescriptionOption = new Option<string?>(
+    name: "--description",
+    description: "Task description.");
+
+var createStatusOption = new Option<string?>(
+    name: "--status",
+    description: "Status name (e.g. \"to do\", \"in progress\").");
+
+var createPriorityOption = new Option<string?>(
+    name: "--priority",
+    description: "Priority: urgent, high, normal, or low.");
+
+var createDueDateOption = new Option<string?>(
+    name: "--due-date",
+    description: "Due date as ISO 8601. Timezone-less values are treated as JST (+09:00).");
+
+var createStartDateOption = new Option<string?>(
+    name: "--start-date",
+    description: "Start date as ISO 8601. Timezone-less values are treated as JST (+09:00).");
+
+var createTimeEstimateOption = new Option<int?>(
+    name: "--time-estimate",
+    description: "Time estimate in minutes.");
+
+var createTaskCommand = new Command("create-task", "Create a new task and output it as JSON");
+createTaskCommand.AddArgument(createNameArgument);
+createTaskCommand.AddOption(createListOption);
+createTaskCommand.AddOption(createDescriptionOption);
+createTaskCommand.AddOption(createStatusOption);
+createTaskCommand.AddOption(createPriorityOption);
+createTaskCommand.AddOption(createDueDateOption);
+createTaskCommand.AddOption(createStartDateOption);
+createTaskCommand.AddOption(createTimeEstimateOption);
+
+createTaskCommand.SetHandler(async (
+    string name,
+    string list,
+    string? description,
+    string? status,
+    string? priorityStr,
+    string? dueDateStr,
+    string? startDateStr,
+    int? timeEstimateMinutes) =>
+{
+    try
+    {
+        var config = ConfigLoader.Load();
+
+        if (!config.Lists.TryGetValue(list, out var listId))
+        {
+            Console.Error.WriteLine(
+                $"Error: Unknown list name '{list}'. Available: {string.Join(", ", config.Lists.Keys)}");
+            Environment.Exit(1);
+            return;
+        }
+
+        TaskPriority? priority = null;
+        if (priorityStr is not null)
+        {
+            priority = priorityStr.ToLowerInvariant() switch
+            {
+                "urgent" => TaskPriority.Urgent,
+                "high" => TaskPriority.High,
+                "normal" => TaskPriority.Normal,
+                "low" => TaskPriority.Low,
+                _ => null,
+            };
+            if (priority is null)
+            {
+                Console.Error.WriteLine(
+                    $"Error: Invalid priority '{priorityStr}'. Use urgent, high, normal, or low.");
+                Environment.Exit(1);
+                return;
+            }
+        }
+
+        DateTimeOffset? dueDate = dueDateStr is not null ? ParseIsoDateOrExit(dueDateStr, "--due-date") : null;
+        DateTimeOffset? startDate = startDateStr is not null ? ParseIsoDateOrExit(startDateStr, "--start-date") : null;
+
+        using var httpClient = BuildHttpClient(config);
+        IClickUpClient client = new ClickUpHttpClient(httpClient);
+
+        var request = new CreateTaskRequest(name)
+        {
+            Description = description,
+            Status = status,
+            Priority = priority,
+            DueDate = dueDate,
+            StartDate = startDate,
+            TimeEstimate = timeEstimateMinutes.HasValue
+                ? TimeSpan.FromMinutes(timeEstimateMinutes.Value)
+                : null,
+        };
+
+        var task = await client.CreateTaskAsync(listId, request);
+
+        Console.WriteLine(JsonSerializer.Serialize(task, jsonOptions));
+    }
+    catch (FileNotFoundException ex)
+    {
+        Console.Error.WriteLine($"Error: {ex.Message}");
+        Environment.Exit(1);
+    }
+    catch (HttpRequestException ex)
+    {
+        var statusPart = ex.StatusCode.HasValue
+            ? $"{(int)ex.StatusCode.Value} {ex.StatusCode.Value}"
+            : "no status code";
+        Console.Error.WriteLine($"HTTP Error ({statusPart}): {ex.Message}");
+        Environment.Exit(1);
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"Error: {ex.Message}");
+        Environment.Exit(1);
+    }
+},
+createNameArgument, createListOption, createDescriptionOption, createStatusOption,
+createPriorityOption, createDueDateOption, createStartDateOption, createTimeEstimateOption);
+
+rootCommand.AddCommand(createTaskCommand);
+
 return await rootCommand.InvokeAsync(args);
 
-static DateTimeOffset ParseIsoDate(string value, string optionName)
+static DateTimeOffset ParseIsoDateOrExit(string value, string optionName)
 {
-    if (DateTimeOffset.TryParse(
-            value,
-            System.Globalization.CultureInfo.InvariantCulture,
-            System.Globalization.DateTimeStyles.RoundtripKind,
-            out var result))
-        return result;
-
-    Console.Error.WriteLine(
-        $"Error: '{optionName}' value '{value}' is not a valid ISO 8601 datetime.");
-    Environment.Exit(1);
-    return default;
+    try
+    {
+        return DateParsing.ParseIsoDate(value, optionName);
+    }
+    catch (ArgumentException ex)
+    {
+        Console.Error.WriteLine(
+            $"Error: {ex.Message}");
+        Environment.Exit(1);
+        return default;
+    }
 }
 
 static HttpClient BuildHttpClient(AppConfig config)
