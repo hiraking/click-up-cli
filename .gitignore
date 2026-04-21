@@ -12,3 +12,6 @@ config.json
 
 # Publish output
 out/
+
+# Local git worktrees
+.worktrees/
