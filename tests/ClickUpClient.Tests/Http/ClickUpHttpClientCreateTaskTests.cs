@@ -113,6 +113,41 @@ public class ClickUpHttpClientCreateTaskTests
     }
 
     [Fact]
+    public async Task CreateTaskAsync_SerializesParent()
+    {
+        var (client, handler) = CreateClient();
+
+        await client.CreateTaskAsync("list42", new CreateTaskRequest("Task") { ParentId = "parent-123" });
+
+        var body = JsonDocument.Parse(handler.LastRequestBody!).RootElement;
+        Assert.Equal("parent-123", body.GetProperty("parent").GetString());
+    }
+
+    [Fact]
+    public async Task CreateTaskAsync_SerializesParentAlongsideStartAndDueDates()
+    {
+        var (client, handler) = CreateClient();
+        var startDate = new DateTimeOffset(2026, 4, 25, 9, 0, 0, TimeSpan.FromHours(9));
+        var dueDate = new DateTimeOffset(2026, 5, 1, 18, 30, 0, TimeSpan.FromHours(9));
+
+        await client.CreateTaskAsync(
+            "list42",
+            new CreateTaskRequest("Task")
+            {
+                ParentId = "parent-456",
+                StartDate = startDate,
+                DueDate = dueDate,
+            });
+
+        var body = JsonDocument.Parse(handler.LastRequestBody!).RootElement;
+        Assert.Equal("parent-456", body.GetProperty("parent").GetString());
+        Assert.Equal(startDate.ToUnixTimeMilliseconds(), body.GetProperty("start_date").GetInt64());
+        Assert.True(body.GetProperty("start_date_time").GetBoolean());
+        Assert.Equal(dueDate.ToUnixTimeMilliseconds(), body.GetProperty("due_date").GetInt64());
+        Assert.True(body.GetProperty("due_date_time").GetBoolean());
+    }
+
+    [Fact]
     public async Task CreateTaskAsync_DueDateWithTime_SetsDueDateTimeTrue()
     {
         var (client, handler) = CreateClient();

@@ -133,6 +133,7 @@ public sealed class ClickUpHttpClient : IClickUpClient
         return new RawCreateTaskBody
         {
             Name = request.Name,
+            Parent = request.ParentId,
             Description = request.Description,
             Status = request.Status,
             Priority = request.Priority.HasValue ? (int)request.Priority.Value : null,

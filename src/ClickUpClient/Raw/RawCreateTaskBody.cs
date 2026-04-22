@@ -4,6 +4,7 @@ namespace ClickUpClient.Raw;
 internal sealed class RawCreateTaskBody
 {
     public string Name { get; init; } = string.Empty;
+    public string? Parent { get; init; }
     public string? Description { get; init; }
     public string? Status { get; init; }
 

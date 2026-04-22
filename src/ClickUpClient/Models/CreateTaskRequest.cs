@@ -3,6 +3,8 @@ namespace ClickUpClient.Models;
 /// <summary>タスク作成リクエストのパラメータ。</summary>
 public sealed record CreateTaskRequest(string Name)
 {
+    public string? ParentId { get; init; }
+
     public string? Description { get; init; }
 
     /// <summary>ステータス表示名 (例: "to do", "in progress")</summary>

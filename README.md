@@ -94,6 +94,7 @@ clickup create-task <name> --list <name> [options]
 | `name` | string | タスク名（必須） |
 | `--list <name>` | string | 作成先リスト名（`config.json` の `lists` キー）（必須） |
 | `--description <text>` | string | タスクの説明 |
+| `--parent <taskId>` | string | 親タスク ID。指定するとサブタスクとして作成 |
 | `--status <name>` | string | ステータス名（例: `"to do"`, `"in progress"`） |
 | `--priority <value>` | string | 優先度: `urgent` / `high` / `normal` / `low` |
 | `--due-date <ISO8601>` | string | 期日。時刻を含む場合は due_date_time=true として送信 |
@@ -113,9 +114,10 @@ clickup create-task "新しいタスク" --list work
 # オプション全指定
 clickup create-task "設計書を書く" --list work `
   --description "アーキテクチャ設計書の作成" `
+  --parent "86exa7yq5" `
   --status "to do" `
   --priority high `
-  --due-date "2026-05-01" `
+  --due-date "2026-05-01T18:00+09:00" `
   --start-date "2026-04-25T09:00" `
   --time-estimate 120
 ```
