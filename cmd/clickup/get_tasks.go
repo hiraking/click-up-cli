@@ -4,8 +4,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/hiraking/click-up-client/internal/client"
@@ -86,13 +84,4 @@ func newGetTasksCmd() *cobra.Command {
 		"Exclude subtasks from results.")
 
 	return cmd
-}
-
-func availableListNames(lists map[string]string) string {
-	names := make([]string, 0, len(lists))
-	for k := range lists {
-		names = append(names, k)
-	}
-	sort.Strings(names)
-	return strings.Join(names, ", ")
 }
