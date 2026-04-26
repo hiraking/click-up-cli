@@ -93,7 +93,8 @@ func parseUnixMs(s string) time.Time {
 }
 
 // hasTimeComponent は time.Time の時刻部分（時・分・秒・ナノ秒）が
-// すべてゼロかどうかを判定する。
+// すべてゼロかどうかを判定する。UTC に正規化してから判定する。
 func hasTimeComponent(t time.Time) bool {
-	return t.Hour() != 0 || t.Minute() != 0 || t.Second() != 0 || t.Nanosecond() != 0
+	u := t.UTC()
+	return u.Hour() != 0 || u.Minute() != 0 || u.Second() != 0 || u.Nanosecond() != 0
 }

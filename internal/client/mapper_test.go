@@ -89,6 +89,20 @@ func TestMapToRawCreateBody_DueDateTimeFlag(t *testing.T) {
 	assert.Equal(t, 2, *body.Priority) // PriorityHigh = 2
 }
 
+func TestMapToRawCreateBody_StartDateTimeFlag(t *testing.T) {
+	// 時刻あり → start_date_time = true
+	withTime := time.Date(2026, 5, 1, 18, 0, 0, 0, time.UTC)
+	req := models.CreateTaskRequest{
+		Name:      "Test",
+		StartDate: &withTime,
+	}
+
+	body := mapToRawCreateBody(req)
+
+	assert.Equal(t, withTime.UnixMilli(), *body.StartDate)
+	assert.True(t, *body.StartDateTime)
+}
+
 func TestMapToRawCreateBody_MidnightHasNoTime(t *testing.T) {
 	// 00:00:00 → due_date_time = false
 	midnight := time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC)
