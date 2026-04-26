@@ -29,11 +29,11 @@ func Build(tasks []models.TaskSummary) []models.TaskSummary {
 		}
 	}
 
-	// 孤立タスク（親が存在しない）もルートに追加
-	for id, t := range taskMap {
+	// 孤立タスク（親が存在しない）もルートに追加（スライス順序で確定的に処理）
+	for _, t := range tasks {
 		if t.ParentID != nil {
 			if _, exists := taskMap[*t.ParentID]; !exists {
-				rootIDs = append(rootIDs, id)
+				rootIDs = append(rootIDs, t.ID)
 			}
 		}
 	}

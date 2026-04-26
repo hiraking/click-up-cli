@@ -14,6 +14,7 @@ func makeTask(id string, parentID *string) models.TaskSummary {
 	return models.TaskSummary{
 		ID:       id,
 		Name:     "Task " + id,
+		ParentID: parentID,
 		Subtasks: []models.TaskSummary{},
 	}
 }
@@ -38,9 +39,7 @@ func TestBuild_AllRoots(t *testing.T) {
 func TestBuild_SingleLevel(t *testing.T) {
 	parent := makeTask("parent", nil)
 	child1 := makeTask("child1", strPtr("parent"))
-	child1.ParentID = strPtr("parent")
 	child2 := makeTask("child2", strPtr("parent"))
-	child2.ParentID = strPtr("parent")
 
 	result := tree.Build([]models.TaskSummary{parent, child1, child2})
 
@@ -52,9 +51,7 @@ func TestBuild_SingleLevel(t *testing.T) {
 func TestBuild_MultiLevel(t *testing.T) {
 	grandparent := makeTask("gp", nil)
 	parent := makeTask("p", strPtr("gp"))
-	parent.ParentID = strPtr("gp")
 	child := makeTask("c", strPtr("p"))
-	child.ParentID = strPtr("p")
 
 	result := tree.Build([]models.TaskSummary{grandparent, parent, child})
 
@@ -69,7 +66,6 @@ func TestBuild_MultiLevel(t *testing.T) {
 func TestBuild_OrphanedTaskBecomesRoot(t *testing.T) {
 	// 親が存在しないタスクはルートとして扱う
 	orphan := makeTask("orphan", strPtr("nonexistent"))
-	orphan.ParentID = strPtr("nonexistent")
 
 	result := tree.Build([]models.TaskSummary{orphan})
 	assert.Len(t, result, 1)
