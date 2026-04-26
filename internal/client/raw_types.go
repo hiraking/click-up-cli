@@ -32,5 +32,6 @@ type rawListRef struct {
 }
 
 type rawGetTasksResponse struct {
-	Tasks []rawTask `json:"tasks"`
+	Tasks    []rawTask `json:"tasks"`
+	LastPage bool      `json:"last_page"`
 }

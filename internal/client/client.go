@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 )
 
 const baseURL = "https://api.clickup.com/api/"
+const maxPages = 10
 
 // ClickUpClient は ClickUp API の HTTP クライアントインターフェース。
 type ClickUpClient interface {
@@ -28,7 +30,6 @@ type ClickUpClient interface {
 // GetTasksOptions は GetTasks のフィルタオプション。
 type GetTasksOptions struct {
 	IncludeSubtasks bool
-	Page            int
 	ListIDs         []string
 	Statuses        []string
 	DueDateGt       *time.Time
@@ -51,15 +52,25 @@ func New(apiKey string) ClickUpClient {
 }
 
 func (c *httpClient) GetTasks(ctx context.Context, teamID string, opts GetTasksOptions) ([]models.TaskSummary, error) {
-	rawURL := c.buildGetTasksURL(teamID, opts)
+	var allRaw []rawTask
+	for page := 0; page < maxPages; page++ {
+		rawURL := c.buildGetTasksURL(teamID, opts, page)
 
-	var resp rawGetTasksResponse
-	if err := c.doGet(ctx, rawURL, &resp); err != nil {
-		return nil, err
+		var resp rawGetTasksResponse
+		if err := c.doGet(ctx, rawURL, &resp); err != nil {
+			return nil, err
+		}
+		allRaw = append(allRaw, resp.Tasks...)
+		if resp.LastPage {
+			break
+		}
+		if page == maxPages-1 {
+			fmt.Fprintf(os.Stderr, "warning: reached max page limit (%d pages, %d tasks). There may be more tasks. Use filters to narrow down results.\n", maxPages, len(allRaw))
+		}
 	}
 
-	summaries := make([]models.TaskSummary, len(resp.Tasks))
-	for i, t := range resp.Tasks {
+	summaries := make([]models.TaskSummary, len(allRaw))
+	for i, t := range allRaw {
 		summaries[i] = toSummary(t)
 	}
 	return tree.Build(summaries), nil
@@ -130,14 +141,14 @@ func (c *httpClient) doGet(ctx context.Context, rawURL string, out any) error {
 	return json.NewDecoder(resp.Body).Decode(out)
 }
 
-func (c *httpClient) buildGetTasksURL(teamID string, opts GetTasksOptions) string {
+func (c *httpClient) buildGetTasksURL(teamID string, opts GetTasksOptions, page int) string {
 	params := url.Values{}
 	if opts.IncludeSubtasks {
 		params.Set("subtasks", "true")
 	} else {
 		params.Set("subtasks", "false")
 	}
-	params.Set("page", strconv.Itoa(opts.Page))
+	params.Set("page", strconv.Itoa(page))
 	for _, id := range opts.ListIDs {
 		params.Add("list_ids[]", id)
 	}
