@@ -12,7 +12,7 @@ go build -o out/clickup ./cmd/clickup
 
 ### 2. 設定ファイルの作成
 
-バイナリと同じディレクトリに `config.json` を作成する（`config.sample.json` をコピーして編集）。
+`~/.clickup/config.json` を作成する（`config.sample.json` をコピーして編集）。
 
 ```json
 {
@@ -31,7 +31,7 @@ go build -o out/clickup ./cmd/clickup
 | `teamId` | ワークスペース ID（URL の `/w/{teamId}/` から確認） |
 | `lists` | リスト名 → リスト ID のマッピング。`--list` オプションで名前を指定するために使う |
 
-> `config.json` は `.gitignore` で除外済み。コミットされない。
+> `config.json` は `.gitignore` で除外済み。コミットされない。パスは `~/.clickup/config.json`。
 
 ---
 

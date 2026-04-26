@@ -12,11 +12,11 @@ import (
 )
 
 func loadConfig() (*config.AppConfig, error) {
-	execPath, err := os.Executable()
+	home, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
 	}
-	return config.Load(filepath.Join(filepath.Dir(execPath), "config.json"))
+	return config.Load(filepath.Join(home, ".clickup", "config.json"))
 }
 
 func printJSON(v any) error {
