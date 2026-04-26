@@ -9,8 +9,5 @@ out/
 *.test
 *.out
 
-# CLI runtime config (contains API keys)
-config.json
-
 # Local git worktrees
 .worktrees/

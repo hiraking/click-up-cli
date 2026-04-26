@@ -31,7 +31,7 @@ go build -o out/clickup ./cmd/clickup
 | `teamId` | ワークスペース ID（URL の `/w/{teamId}/` から確認） |
 | `lists` | リスト名 → リスト ID のマッピング。`--list` オプションで名前を指定するために使う |
 
-> `config.json` は `.gitignore` で除外済み。コミットされない。パスは `~/.clickup/config.json`。
+> `config.json` はリポジトリ外（`~/.clickup/config.json`）に配置するため、コミットされない。
 
 ---
 
