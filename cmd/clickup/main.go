@@ -18,7 +18,7 @@ func main() {
 
 	rootCmd.AddCommand(newGetTaskCmd())
 	rootCmd.AddCommand(newGetTasksCmd())
-	// create-task は後続タスクで追加する
+	rootCmd.AddCommand(newCreateTaskCmd())
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
