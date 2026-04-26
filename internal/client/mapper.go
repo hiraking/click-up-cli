@@ -19,6 +19,7 @@ func toSummary(raw rawTask) models.TaskSummary {
 		ParentID:    raw.Parent,
 		URL:         raw.URL,
 		DueDate:     parseUnixMsPtr(raw.DueDate),
+		StartDate:   parseUnixMsPtr(raw.StartDate),
 		Description: raw.Description,
 		ListID:      raw.List.ID,
 		ListName:    raw.List.Name,

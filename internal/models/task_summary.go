@@ -12,6 +12,7 @@ type TaskSummary struct {
 	Priority    *string       `json:"priority"`
 	ParentID    *string       `json:"parentId"`
 	URL         string        `json:"url"`
+	StartDate   *time.Time    `json:"startDate,omitempty"`
 	DueDate     *time.Time    `json:"dueDate"`
 	Description *string       `json:"description"`
 	ListID      string        `json:"listId"`
