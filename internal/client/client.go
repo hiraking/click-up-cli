@@ -46,7 +46,7 @@ func New(apiKey string) ClickUpClient {
 	return &httpClient{
 		base:   baseURL,
 		apiKey: apiKey,
-		http:   &http.Client{},
+		http:   &http.Client{Timeout: 30 * time.Second},
 	}
 }
 
