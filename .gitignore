@@ -1,17 +1,16 @@
-# .NET build artifacts
-bin/
-obj/
+# Go build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+out/
 
-# Visual Studio
-.vs/
-*.user
-*.suo
+# Test cache
+*.test
+*.out
 
 # CLI runtime config (contains API keys)
 config.json
-
-# Publish output
-out/
 
 # Local git worktrees
 .worktrees/

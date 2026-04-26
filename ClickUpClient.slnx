@@ -1,9 +1,0 @@
-<Solution>
-  <Folder Name="/src/">
-    <Project Path="src/ClickUpClient/ClickUpClient.csproj" />
-    <Project Path="src/ClickUpCli/ClickUpCli.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/ClickUpClient.Tests/ClickUpClient.Tests.csproj" />
-  </Folder>
-</Solution>
