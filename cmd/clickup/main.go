@@ -19,6 +19,7 @@ func main() {
 	rootCmd.AddCommand(newGetTaskCmd())
 	rootCmd.AddCommand(newGetTasksCmd())
 	rootCmd.AddCommand(newCreateTaskCmd())
+	rootCmd.AddCommand(newUpdateTaskCmd())
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
