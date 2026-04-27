@@ -26,6 +26,7 @@ type ClickUpClient interface {
 	GetTasks(ctx context.Context, teamID string, opts GetTasksOptions) ([]models.TaskSummary, error)
 	GetTask(ctx context.Context, taskID string) (models.TaskSummary, error)
 	CreateTask(ctx context.Context, listID string, req models.CreateTaskRequest) (models.TaskSummary, error)
+	UpdateTask(ctx context.Context, taskID string, req models.UpdateTaskRequest) (models.TaskSummary, error)
 }
 
 // GetTasksOptions は GetTasks のフィルタオプション。
@@ -99,6 +100,40 @@ func (c *httpClient) CreateTask(ctx context.Context, listID string, req models.C
 	}
 
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, rawURL, bytes.NewReader(bodyBytes))
+	if err != nil {
+		return models.TaskSummary{}, err
+	}
+	httpReq.Header.Set("Authorization", c.apiKey)
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	httpResp, err := c.http.Do(httpReq)
+	if err != nil {
+		return models.TaskSummary{}, err
+	}
+	defer httpResp.Body.Close()
+
+	if httpResp.StatusCode >= 400 {
+		b, _ := io.ReadAll(httpResp.Body)
+		return models.TaskSummary{}, fmt.Errorf("HTTP Error (%d): %s", httpResp.StatusCode, string(b))
+	}
+
+	var raw rawTask
+	if err := json.NewDecoder(httpResp.Body).Decode(&raw); err != nil {
+		return models.TaskSummary{}, fmt.Errorf("failed to decode response: %w", err)
+	}
+	return toSummary(raw), nil
+}
+
+func (c *httpClient) UpdateTask(ctx context.Context, taskID string, req models.UpdateTaskRequest) (models.TaskSummary, error) {
+	rawURL := c.base + "v2/task/" + taskID
+	body := mapToRawUpdateBody(req)
+
+	bodyBytes, err := json.Marshal(body)
+	if err != nil {
+		return models.TaskSummary{}, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPut, rawURL, bytes.NewReader(bodyBytes))
 	if err != nil {
 		return models.TaskSummary{}, err
 	}
