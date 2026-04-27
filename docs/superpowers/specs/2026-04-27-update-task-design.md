@@ -36,9 +36,10 @@ update-task <taskId> [flags]
 `--clear FIELD` を指定すると、対象フィールドを API 上でクリア（null / 削除）する。複数フィールドを同時にクリアする場合は繰り返し指定する。
 
 **受け付けるフィールド名:**  
-`description`, `status`, `priority`, `due-date`, `start-date`, `time-estimate`, `parent`
+`description`, `status`, `priority`, `due-date`, `start-date`, `time-estimate`
 
-> `name` はクリア不可。ClickUp API でタスク名は必須フィールドのため。
+> `name` はクリア不可。ClickUp API でタスク名は必須フィールドのため。  
+> `parent` はクリア不可。ClickUp API がサブタスクの親削除（null）を受け付けないため。
 
 **使用例:**
 ```bash
@@ -54,7 +55,7 @@ update-task abc123 --name "新しい名前" --clear due-date
 
 不正なフィールド名を指定した場合はエラーを返す:
 ```
-Error: invalid field for --clear: "foo". Accepted: description, status, priority, due-date, start-date, time-estimate, parent
+Error: invalid field for --clear: "foo". Accepted: description, status, priority, due-date, start-date, time-estimate
 ```
 
 フラグを何も指定しない場合もエラーを返す:
@@ -119,9 +120,20 @@ type UpdateTaskRequest struct {
 
 ### `rawUpdateTaskBody`
 
-ClickUp API の PUT `/v2/task/{taskId}` ボディに対応する型。`rawCreateTaskBody` と構造が類似するため、同ファイルに定義する。
+`map[string]interface{}` を使用する（型付き struct ではなく）。
 
-**注意:** 通常フィールドは `omitempty` で nil を除外するが、クリア対象フィールドは明示的に null / 0 を API に送る必要がある。`ClearFields` に含まれるフィールドは `omitempty` を使わない専用フィールドで上書きするか、カスタムマーシャラーで対応する。実装時に ClickUp API の各フィールドのクリア方法（null / 0 / 空文字列）を `@references/clickup-api-v2-reference.json` で確認すること。
+理由: クリアするフィールドは JSON で明示的に `null` を送る必要があるが、typed struct + `omitempty` では `nil` フィールドが除外されてしまう。`map[string]interface{}` なら `nil` 値がそのまま JSON `null` にシリアライズされる。
+
+**フィールド別クリア方法（API 仕様より）:**
+
+| フィールド | クリア時の送信値 |
+|---|---|
+| `description` | `" "` (スペース) ※ API ドキュメントに明記 |
+| `status` | `null` |
+| `priority` | `null` |
+| `due_date` | `null` |
+| `start_date` | `null` |
+| `time_estimate` | `null` |
 
 ---
 
