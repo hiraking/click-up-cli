@@ -134,6 +134,64 @@ clickup get-task 86exa7yq5
 
 ---
 
+### `update-task` — タスクを更新
+
+```
+clickup update-task <taskId> [options]
+```
+
+| 引数/オプション | 型 | 説明 |
+|---|---|---|
+| `taskId` | string | 更新対象のタスク ID（必須） |
+| `--name <text>` | string | 新しいタスク名 |
+| `--description <text>` | string | 新しい説明 |
+| `--status <name>` | string | 新しいステータス名（例: `"to do"`, `"in progress"`） |
+| `--priority <value>` | string | 新しい優先度: `urgent` / `high` / `normal` / `low` |
+| `--due-date <ISO8601>` | string | 新しい期日 |
+| `--start-date <ISO8601>` | string | 新しい開始日 |
+| `--time-estimate <分>` | int | 新しい見積もり時間（分単位） |
+| `--parent <taskId>` | string | 新しい親タスク ID |
+| `--clear <field>` | string | フィールドをクリアする（繰り返し可） |
+
+指定したオプションのフィールドのみ更新される。未指定のフィールドは変更されない。
+
+**出力:** 更新後のタスクの JSON オブジェクト。
+
+#### `--clear` でクリアできるフィールド
+
+| フィールド名 | 説明 |
+|---|---|
+| `description` | 説明をクリア |
+| `status` | ステータスをクリア |
+| `priority` | 優先度をクリア |
+| `due-date` | 期日をクリア |
+| `start-date` | 開始日をクリア |
+| `time-estimate` | 見積もり時間をクリア |
+
+> `name` はクリア不可（ClickUp API の必須フィールド）。  
+> `parent` はクリア不可（ClickUp API がサブタスクの親削除を非サポート）。
+
+#### 使用例
+
+```bash
+# タスク名を変更する
+clickup update-task 86exa7yq5 --name "新しいタスク名"
+
+# ステータスと優先度を同時に変更する
+clickup update-task 86exa7yq5 --status "in progress" --priority high
+
+# 期日をクリアする
+clickup update-task 86exa7yq5 --clear due-date
+
+# 名前を変更しつつ説明をクリアする
+clickup update-task 86exa7yq5 --name "新しい名前" --clear description
+
+# 複数フィールドをクリアする
+clickup update-task 86exa7yq5 --clear due-date --clear priority
+```
+
+---
+
 ## 出力フォーマット
 
 `TaskSummary` の camelCase JSON。
