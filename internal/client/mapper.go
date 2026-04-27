@@ -99,3 +99,57 @@ func hasTimeComponent(t time.Time) bool {
 	u := t.UTC()
 	return u.Hour() != 0 || u.Minute() != 0 || u.Second() != 0 || u.Nanosecond() != 0
 }
+
+// mapToRawUpdateBody は models.UpdateTaskRequest を PUT /v2/task/{taskId} ボディに変換する。
+// map[string]interface{} を使うことでクリアフィールドへの明示的 null 送信を実現する。
+func mapToRawUpdateBody(req models.UpdateTaskRequest) map[string]interface{} {
+	body := make(map[string]interface{})
+
+	if req.Name != nil {
+		body["name"] = *req.Name
+	}
+	if req.Description != nil {
+		body["description"] = *req.Description
+	}
+	if req.Status != nil {
+		body["status"] = *req.Status
+	}
+	if req.Priority != nil {
+		body["priority"] = int(*req.Priority)
+	}
+	if req.DueDate != nil {
+		body["due_date"] = req.DueDate.UnixMilli()
+		body["due_date_time"] = hasTimeComponent(*req.DueDate)
+	}
+	if req.StartDate != nil {
+		body["start_date"] = req.StartDate.UnixMilli()
+		body["start_date_time"] = hasTimeComponent(*req.StartDate)
+	}
+	if req.TimeEstimate != nil {
+		body["time_estimate"] = int(req.TimeEstimate.Milliseconds())
+	}
+	if req.Parent != nil {
+		body["parent"] = *req.Parent
+	}
+
+	for _, field := range req.ClearFields {
+		switch field {
+		case "description":
+			body["description"] = " "
+		case "status":
+			body["status"] = nil
+		case "priority":
+			body["priority"] = nil
+		case "due-date":
+			body["due_date"] = nil
+			delete(body, "due_date_time")
+		case "start-date":
+			body["start_date"] = nil
+			delete(body, "start_date_time")
+		case "time-estimate":
+			body["time_estimate"] = nil
+		}
+	}
+
+	return body
+}

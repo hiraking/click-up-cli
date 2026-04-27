@@ -130,3 +130,133 @@ func TestMapToRawCreateBody_NilFields(t *testing.T) {
 	assert.Nil(t, body.StartDate)
 	assert.Nil(t, body.TimeEstimate)
 }
+
+func TestMapToRawUpdateBody_SetName(t *testing.T) {
+	name := "New Name"
+	req := models.UpdateTaskRequest{Name: &name}
+
+	body := mapToRawUpdateBody(req)
+
+	assert.Equal(t, "New Name", body["name"])
+	assert.NotContains(t, body, "description")
+}
+
+func TestMapToRawUpdateBody_SetPriority(t *testing.T) {
+	pri := models.PriorityHigh
+	req := models.UpdateTaskRequest{Priority: &pri}
+
+	body := mapToRawUpdateBody(req)
+
+	assert.Equal(t, 2, body["priority"])
+}
+
+func TestMapToRawUpdateBody_SetDueDate_WithTime(t *testing.T) {
+	due := time.Date(2026, 5, 1, 18, 0, 0, 0, time.UTC)
+	req := models.UpdateTaskRequest{DueDate: &due}
+
+	body := mapToRawUpdateBody(req)
+
+	assert.Equal(t, due.UnixMilli(), body["due_date"])
+	assert.Equal(t, true, body["due_date_time"])
+}
+
+func TestMapToRawUpdateBody_SetDueDate_Midnight(t *testing.T) {
+	due := time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC)
+	req := models.UpdateTaskRequest{DueDate: &due}
+
+	body := mapToRawUpdateBody(req)
+
+	assert.Equal(t, due.UnixMilli(), body["due_date"])
+	assert.Equal(t, false, body["due_date_time"])
+}
+
+func TestMapToRawUpdateBody_SetTimeEstimate(t *testing.T) {
+	d := 30 * time.Minute
+	req := models.UpdateTaskRequest{TimeEstimate: &d}
+
+	body := mapToRawUpdateBody(req)
+
+	assert.Equal(t, int(d.Milliseconds()), body["time_estimate"])
+}
+
+func TestMapToRawUpdateBody_ClearDescription(t *testing.T) {
+	// ClickUp API: description のクリアはスペース " " を送信する
+	req := models.UpdateTaskRequest{ClearFields: []string{"description"}}
+
+	body := mapToRawUpdateBody(req)
+
+	assert.Equal(t, " ", body["description"])
+}
+
+func TestMapToRawUpdateBody_ClearPriority(t *testing.T) {
+	req := models.UpdateTaskRequest{ClearFields: []string{"priority"}}
+
+	body := mapToRawUpdateBody(req)
+
+	assert.Nil(t, body["priority"])
+	_, exists := body["priority"]
+	assert.True(t, exists, "priority キーは存在するが値が nil であること")
+}
+
+func TestMapToRawUpdateBody_ClearDueDate(t *testing.T) {
+	req := models.UpdateTaskRequest{ClearFields: []string{"due-date"}}
+
+	body := mapToRawUpdateBody(req)
+
+	assert.Nil(t, body["due_date"])
+	_, exists := body["due_date"]
+	assert.True(t, exists)
+	assert.NotContains(t, body, "due_date_time")
+}
+
+func TestMapToRawUpdateBody_ClearStartDate(t *testing.T) {
+	req := models.UpdateTaskRequest{ClearFields: []string{"start-date"}}
+
+	body := mapToRawUpdateBody(req)
+
+	assert.Nil(t, body["start_date"])
+	_, exists := body["start_date"]
+	assert.True(t, exists)
+	assert.NotContains(t, body, "start_date_time")
+}
+
+func TestMapToRawUpdateBody_ClearTimeEstimate(t *testing.T) {
+	req := models.UpdateTaskRequest{ClearFields: []string{"time-estimate"}}
+
+	body := mapToRawUpdateBody(req)
+
+	assert.Nil(t, body["time_estimate"])
+	_, exists := body["time_estimate"]
+	assert.True(t, exists)
+}
+
+func TestMapToRawUpdateBody_ClearStatus(t *testing.T) {
+	req := models.UpdateTaskRequest{ClearFields: []string{"status"}}
+
+	body := mapToRawUpdateBody(req)
+
+	assert.Nil(t, body["status"])
+	_, exists := body["status"]
+	assert.True(t, exists)
+}
+
+func TestMapToRawUpdateBody_SetAndClear_ClearWins(t *testing.T) {
+	// set と clear が同時に指定された場合、clear が優先される
+	desc := "some text"
+	req := models.UpdateTaskRequest{
+		Description: &desc,
+		ClearFields: []string{"description"},
+	}
+
+	body := mapToRawUpdateBody(req)
+
+	assert.Equal(t, " ", body["description"])
+}
+
+func TestMapToRawUpdateBody_NoFields(t *testing.T) {
+	req := models.UpdateTaskRequest{}
+
+	body := mapToRawUpdateBody(req)
+
+	assert.Empty(t, body)
+}
