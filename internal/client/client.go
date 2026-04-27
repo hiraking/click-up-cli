@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hiraking/click-up-client/internal/models"
@@ -34,6 +35,7 @@ type GetTasksOptions struct {
 	Statuses        []string
 	DueDateGt       *time.Time
 	DueDateLt       *time.Time
+	Query           string
 }
 
 type httpClient struct {
@@ -139,6 +141,24 @@ func (c *httpClient) doGet(ctx context.Context, rawURL string, out any) error {
 	}
 
 	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+func filterByQuery(tasks []models.TaskSummary, query string) []models.TaskSummary {
+	if query == "" {
+		return tasks
+	}
+	q := strings.ToLower(query)
+	result := make([]models.TaskSummary, 0, len(tasks))
+	for _, t := range tasks {
+		desc := ""
+		if t.Description != nil {
+			desc = *t.Description
+		}
+		if strings.Contains(strings.ToLower(t.Name+" "+desc), q) {
+			result = append(result, t)
+		}
+	}
+	return result
 }
 
 func (c *httpClient) buildGetTasksURL(teamID string, opts GetTasksOptions, page int) string {
