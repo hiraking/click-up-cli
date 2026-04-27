@@ -70,3 +70,12 @@ func TestFilterByQuery_NoMatch(t *testing.T) {
 	result := filterByQuery(tasks, "deploy")
 	assert.Empty(t, result)
 }
+
+func TestFilterByQuery_NoFalsePositiveAcrossFields(t *testing.T) {
+	tasks := []models.TaskSummary{
+		{Name: "Fix bug", Description: ptr("login issue")},
+	}
+	// "bug l" は名前末尾と説明先頭をまたぐクエリ → マッチしないこと
+	result := filterByQuery(tasks, "bug l")
+	assert.Empty(t, result)
+}

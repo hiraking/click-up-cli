@@ -151,11 +151,11 @@ func filterByQuery(tasks []models.TaskSummary, query string) []models.TaskSummar
 	q := strings.ToLower(query)
 	result := make([]models.TaskSummary, 0, len(tasks))
 	for _, t := range tasks {
-		desc := ""
-		if t.Description != nil {
-			desc = *t.Description
+		if strings.Contains(strings.ToLower(t.Name), q) {
+			result = append(result, t)
+			continue
 		}
-		if strings.Contains(strings.ToLower(t.Name+" "+desc), q) {
+		if t.Description != nil && strings.Contains(strings.ToLower(*t.Description), q) {
 			result = append(result, t)
 		}
 	}

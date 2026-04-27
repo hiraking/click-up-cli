@@ -85,7 +85,7 @@ func newGetTasksCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&noSubtasks, "no-subtasks", false,
 		"Exclude subtasks from results.")
 	cmd.Flags().StringVar(&query, "query", "",
-		"Case-insensitive substring to match against task name and description.")
+		"Case-insensitive substring to match against task name and description. Filtering is performed client-side after fetching all pages.")
 
 	return cmd
 }
