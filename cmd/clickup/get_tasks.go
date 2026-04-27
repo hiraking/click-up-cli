@@ -17,6 +17,7 @@ func newGetTasksCmd() *cobra.Command {
 	var dueAfterStr string
 	var dueBeforeStr string
 	var noSubtasks bool
+	var query string
 
 	cmd := &cobra.Command{
 		Use:   "get-tasks",
@@ -64,6 +65,7 @@ func newGetTasksCmd() *cobra.Command {
 				Statuses:        statuses,
 				DueDateGt:       dueDateGt,
 				DueDateLt:       dueDateLt,
+				Query:           query,
 			})
 			if err != nil {
 				return err
@@ -82,6 +84,8 @@ func newGetTasksCmd() *cobra.Command {
 		"ISO 8601 datetime. Return only tasks with due date before this value.")
 	cmd.Flags().BoolVar(&noSubtasks, "no-subtasks", false,
 		"Exclude subtasks from results.")
+	cmd.Flags().StringVar(&query, "query", "",
+		"Case-insensitive substring to match against task name and description.")
 
 	return cmd
 }
