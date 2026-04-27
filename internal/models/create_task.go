@@ -24,3 +24,17 @@ type CreateTaskRequest struct {
 	StartDate    *time.Time
 	TimeEstimate *time.Duration // 分単位で渡し、API には ms として送信
 }
+
+// UpdateTaskRequest はタスク更新リクエストのパラメータ。
+// nil フィールドは更新しない。ClearFields に含まれるフィールドは値をクリアする。
+type UpdateTaskRequest struct {
+	Name         *string
+	Description  *string
+	Status       *string
+	Priority     *TaskPriority
+	DueDate      *time.Time
+	StartDate    *time.Time
+	TimeEstimate *time.Duration
+	Parent       *string
+	ClearFields  []string
+}
