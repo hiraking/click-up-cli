@@ -75,6 +75,7 @@ func (c *httpClient) GetTasks(ctx context.Context, teamID string, opts GetTasksO
 	for i, t := range allRaw {
 		summaries[i] = toSummary(t)
 	}
+	summaries = filterByQuery(summaries, opts.Query)
 	return tree.Build(summaries), nil
 }
 
