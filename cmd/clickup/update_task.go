@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/hiraking/click-up-client/internal/client"
@@ -111,6 +112,9 @@ Clearing fields:
 				req.TimeEstimate = &d
 			}
 			if changed("parent") {
+				if strings.TrimSpace(parentID) == "" {
+					return fmt.Errorf("Error: '--parent' must not be empty or whitespace.")
+				}
 				req.Parent = &parentID
 			}
 
