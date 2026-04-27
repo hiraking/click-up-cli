@@ -51,10 +51,15 @@ func TestFilterByQuery_CaseInsensitive(t *testing.T) {
 
 func TestFilterByQuery_NilDescription(t *testing.T) {
 	tasks := []models.TaskSummary{
-		{Name: "Task with nil desc", Description: nil},
+		{Name: "Task A", Description: nil},
 	}
-	result := filterByQuery(tasks, "nil")
+	// Description が nil でもパニックしないこと、かつ名前でマッチすること
+	result := filterByQuery(tasks, "Task A")
 	assert.Len(t, result, 1)
+
+	// Description にしか存在しないクエリ → nil Description でもパニックせずマッチしないこと
+	result2 := filterByQuery(tasks, "description content")
+	assert.Empty(t, result2)
 }
 
 func TestFilterByQuery_NoMatch(t *testing.T) {
