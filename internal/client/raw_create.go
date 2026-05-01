@@ -14,4 +14,5 @@ type rawCreateTaskBody struct {
 	StartDate     *int64  `json:"start_date,omitempty"`
 	StartDateTime *bool   `json:"start_date_time,omitempty"`
 	TimeEstimate  *int    `json:"time_estimate,omitempty"`
+	CustomItemID  *int    `json:"custom_item_id,omitempty"`
 }

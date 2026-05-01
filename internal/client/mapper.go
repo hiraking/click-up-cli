@@ -62,6 +62,11 @@ func mapToRawCreateBody(req models.CreateTaskRequest) rawCreateTaskBody {
 		body.TimeEstimate = &ms
 	}
 
+	if req.CustomItemID != nil {
+		id := int(*req.CustomItemID)
+		body.CustomItemID = &id
+	}
+
 	return body
 }
 
