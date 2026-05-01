@@ -98,6 +98,7 @@ clickup create-task <name> --list <name> [options]
 | `--due-date <ISO8601>` | string | 期日 |
 | `--start-date <ISO8601>` | string | 開始日 |
 | `--time-estimate <分>` | int | 見積もり時間（分単位） |
+| `--task-type <name>` | string | タスクタイプ: `milestone` / `project` / `book` |
 
 **出力:** 作成されたタスクの JSON オブジェクト。
 
@@ -116,6 +117,9 @@ clickup create-task "設計書を書く" --list work \
   --due-date "2026-05-01T18:00+09:00" \
   --start-date "2026-04-25T09:00" \
   --time-estimate 120
+
+# タスクタイプを指定して作成
+clickup create-task "Q2 計画" --list work --task-type milestone
 ```
 
 ---
