@@ -22,6 +22,7 @@ func newCreateTaskCmd() *cobra.Command {
 	var dueDateStr string
 	var startDateStr string
 	var timeEstimateMin int
+	var taskTypeStr string
 
 	cmd := &cobra.Command{
 		Use:   "create-task <name>",
@@ -80,6 +81,13 @@ func newCreateTaskCmd() *cobra.Command {
 				d := time.Duration(timeEstimateMin) * time.Minute
 				req.TimeEstimate = &d
 			}
+			if cmd.Flags().Changed("task-type") {
+				tt, err := parseTaskType(taskTypeStr)
+				if err != nil {
+					return err
+				}
+				req.CustomItemID = &tt
+			}
 
 			c := client.New(cfg.APIKey)
 			task, err := c.CreateTask(context.Background(), listID, req)
@@ -99,6 +107,7 @@ func newCreateTaskCmd() *cobra.Command {
 	cmd.Flags().StringVar(&dueDateStr, "due-date", "", "Due date as ISO 8601. Timezone-less values are treated as JST (+09:00).")
 	cmd.Flags().StringVar(&startDateStr, "start-date", "", "Start date as ISO 8601. Timezone-less values are treated as JST (+09:00).")
 	cmd.Flags().IntVar(&timeEstimateMin, "time-estimate", 0, "Time estimate in minutes.")
+	cmd.Flags().StringVar(&taskTypeStr, "task-type", "", "Task type: milestone, project, or book.")
 
 	return cmd
 }
@@ -115,5 +124,18 @@ func parsePriority(s string) (models.TaskPriority, error) {
 		return models.PriorityLow, nil
 	default:
 		return 0, fmt.Errorf("Error: Invalid priority '%s'. Use urgent, high, normal, or low.", s)
+	}
+}
+
+func parseTaskType(s string) (models.TaskType, error) {
+	switch strings.ToLower(s) {
+	case "milestone":
+		return models.TaskTypeMilestone, nil
+	case "project":
+		return models.TaskTypeProject, nil
+	case "book":
+		return models.TaskTypeBook, nil
+	default:
+		return 0, fmt.Errorf("Error: Invalid task type '%s'. Use milestone, project, or book.", s)
 	}
 }
