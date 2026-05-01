@@ -271,7 +271,7 @@ func TestMapToRawCreateBody_CustomItemID(t *testing.T) {
 	body := mapToRawCreateBody(req)
 
 	require.NotNil(t, body.CustomItemID)
-	assert.Equal(t, 1, *body.CustomItemID)
+	assert.Equal(t, int(models.TaskTypeMilestone), *body.CustomItemID)
 }
 
 func TestMapToRawCreateBody_CustomItemID_Nil(t *testing.T) {
