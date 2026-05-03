@@ -688,7 +688,7 @@ func TestBuild_EntryFullyOutsideRange(t *testing.T) {
 	report, err := timereport.Build(context.Background(), []models.TimeEntry{outside}, reportStart, reportEnd, noFetch)
 	require.NoError(t, err)
 	assert.Empty(t, report.Hierarchy)
-	assert.Equal(t, int64(0), report.Summary.TotalDurationMs)
+	assert.Equal(t, int64(0), report.Summary.TotalDurationMin)
 }
 
 func TestBuild_EntryClippedAtStart(t *testing.T) {
