@@ -85,7 +85,15 @@ func Build(
 		if t.ParentID == nil {
 			return t, nil
 		}
-		return resolveTopLevel(*t.ParentID)
+		parent, err := resolveTopLevel(*t.ParentID)
+		if err != nil {
+			if errors.Is(err, client.ErrNotFound) {
+				// Parent is gone; treat current task as root
+				return t, nil
+			}
+			return models.TaskSummary{}, err
+		}
+		return parent, nil
 	}
 
 	// Hierarchy accumulation maps (insertion-order tracking via slices)
@@ -93,10 +101,12 @@ func Build(
 	listNames := make(map[string]string)
 	listDur := make(map[string]int64)
 
+	type listTask struct{ listID, taskID string }
+
 	taskOrder := make(map[string][]string) // listID -> []topTaskIDs
 	taskNames := make(map[string]string)
-	taskDur := make(map[string]int64)
-	taskSeen := make(map[string]bool)
+	taskDur := make(map[listTask]int64) // (listID, topTaskID) -> duration
+	taskSeen := make(map[listTask]bool) // (listID, topTaskID) -> seen
 
 	type bk struct{ top, rec string }
 	bdOrder := make(map[string][]string) // topTaskID -> []recTaskIDs (in order)
@@ -165,12 +175,13 @@ func Build(
 		listDur[listID] += c.cDurMs
 
 		// Update task maps
-		if !taskSeen[topTaskID] {
-			taskSeen[topTaskID] = true
+		lt := listTask{listID, topTaskID}
+		if !taskSeen[lt] {
+			taskSeen[lt] = true
 			taskOrder[listID] = append(taskOrder[listID], topTaskID)
 			taskNames[topTaskID] = topTaskName
 		}
-		taskDur[topTaskID] += c.cDurMs
+		taskDur[lt] += c.cDurMs
 
 		// Update breakdown maps
 		bkStr := topTaskID + "|" + recTaskID
@@ -219,7 +230,7 @@ func Build(
 			tasks = append(tasks, models.TimeReportTask{
 				TaskID:      tid,
 				TaskName:    taskNames[tid],
-				DurationMin: taskDur[tid] / 60000,
+				DurationMin: taskDur[listTask{lid, tid}] / 60000,
 				Breakdown:   breakdown,
 			})
 			topLevelCount++
