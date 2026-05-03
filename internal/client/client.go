@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,6 +21,11 @@ import (
 
 const baseURL = "https://api.clickup.com/api/"
 const maxPages = 10
+const maxRetries = 3
+const defaultRetryWait = 60 * time.Second
+
+// ErrNotFound is returned when a resource is not found (HTTP 404).
+var ErrNotFound = errors.New("not found")
 
 // ClickUpClient は ClickUp API の HTTP クライアントインターフェース。
 type ClickUpClient interface {
@@ -27,6 +33,7 @@ type ClickUpClient interface {
 	GetTask(ctx context.Context, taskID string) (models.TaskSummary, error)
 	CreateTask(ctx context.Context, listID string, req models.CreateTaskRequest) (models.TaskSummary, error)
 	UpdateTask(ctx context.Context, taskID string, req models.UpdateTaskRequest) (models.TaskSummary, error)
+	GetTimeEntries(ctx context.Context, teamID string, opts GetTimeEntriesOptions) ([]models.TimeEntry, error)
 }
 
 // GetTasksOptions は GetTasks のフィルタオプション。
@@ -37,6 +44,12 @@ type GetTasksOptions struct {
 	DueDateGt       *time.Time
 	DueDateLt       *time.Time
 	Query           string
+}
+
+// GetTimeEntriesOptions は GetTimeEntries のオプション。
+type GetTimeEntriesOptions struct {
+	Start time.Time
+	End   time.Time
 }
 
 type httpClient struct {
@@ -99,26 +112,24 @@ func (c *httpClient) CreateTask(ctx context.Context, listID string, req models.C
 		return models.TaskSummary{}, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, rawURL, bytes.NewReader(bodyBytes))
+	respBody, status, err := c.doWithRetry(ctx, func() (*http.Request, error) {
+		httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, rawURL, bytes.NewReader(bodyBytes))
+		if err != nil {
+			return nil, err
+		}
+		httpReq.Header.Set("Authorization", c.apiKey)
+		httpReq.Header.Set("Content-Type", "application/json")
+		return httpReq, nil
+	})
 	if err != nil {
 		return models.TaskSummary{}, err
 	}
-	httpReq.Header.Set("Authorization", c.apiKey)
-	httpReq.Header.Set("Content-Type", "application/json")
-
-	httpResp, err := c.http.Do(httpReq)
-	if err != nil {
-		return models.TaskSummary{}, err
-	}
-	defer httpResp.Body.Close()
-
-	if httpResp.StatusCode >= 400 {
-		b, _ := io.ReadAll(httpResp.Body)
-		return models.TaskSummary{}, fmt.Errorf("HTTP Error (%d): %s", httpResp.StatusCode, string(b))
+	if status >= 400 {
+		return models.TaskSummary{}, fmt.Errorf("HTTP Error (%d): %s", status, string(respBody))
 	}
 
 	var raw rawTask
-	if err := json.NewDecoder(httpResp.Body).Decode(&raw); err != nil {
+	if err := json.Unmarshal(respBody, &raw); err != nil {
 		return models.TaskSummary{}, fmt.Errorf("failed to decode response: %w", err)
 	}
 	return toSummary(raw), nil
@@ -133,50 +144,128 @@ func (c *httpClient) UpdateTask(ctx context.Context, taskID string, req models.U
 		return models.TaskSummary{}, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPut, rawURL, bytes.NewReader(bodyBytes))
+	respBody, status, err := c.doWithRetry(ctx, func() (*http.Request, error) {
+		httpReq, err := http.NewRequestWithContext(ctx, http.MethodPut, rawURL, bytes.NewReader(bodyBytes))
+		if err != nil {
+			return nil, err
+		}
+		httpReq.Header.Set("Authorization", c.apiKey)
+		httpReq.Header.Set("Content-Type", "application/json")
+		return httpReq, nil
+	})
 	if err != nil {
 		return models.TaskSummary{}, err
 	}
-	httpReq.Header.Set("Authorization", c.apiKey)
-	httpReq.Header.Set("Content-Type", "application/json")
-
-	httpResp, err := c.http.Do(httpReq)
-	if err != nil {
-		return models.TaskSummary{}, err
-	}
-	defer httpResp.Body.Close()
-
-	if httpResp.StatusCode >= 400 {
-		b, _ := io.ReadAll(httpResp.Body)
-		return models.TaskSummary{}, fmt.Errorf("HTTP Error (%d): %s", httpResp.StatusCode, string(b))
+	if status >= 400 {
+		return models.TaskSummary{}, fmt.Errorf("HTTP Error (%d): %s", status, string(respBody))
 	}
 
 	var raw rawTask
-	if err := json.NewDecoder(httpResp.Body).Decode(&raw); err != nil {
+	if err := json.Unmarshal(respBody, &raw); err != nil {
 		return models.TaskSummary{}, fmt.Errorf("failed to decode response: %w", err)
 	}
 	return toSummary(raw), nil
 }
 
+func (c *httpClient) GetTimeEntries(ctx context.Context, teamID string, opts GetTimeEntriesOptions) ([]models.TimeEntry, error) {
+	const fetchBuffer = 3 * time.Hour
+	fetchStart := opts.Start.Add(-fetchBuffer)
+	fetchEnd := opts.End.Add(fetchBuffer)
+
+	params := url.Values{}
+	params.Set("start_date", strconv.FormatInt(fetchStart.UnixMilli(), 10))
+	params.Set("end_date", strconv.FormatInt(fetchEnd.UnixMilli(), 10))
+	params.Set("include_location_names", "true")
+
+	rawURL := c.base + "v2/team/" + teamID + "/time_entries?" + params.Encode()
+
+	var resp rawGetTimeEntriesResponse
+	if err := c.doGet(ctx, rawURL, &resp); err != nil {
+		return nil, err
+	}
+
+	entries := make([]models.TimeEntry, len(resp.Data))
+	for i, raw := range resp.Data {
+		entries[i] = toTimeEntry(raw)
+	}
+	return entries, nil
+}
+
+// doWithRetry は HTTP リクエストを実行し、429 の場合はリトライする。
+// 成功時はレスポンスボディと HTTP ステータスコードを返す。
+func (c *httpClient) doWithRetry(ctx context.Context, makeReq func() (*http.Request, error)) ([]byte, int, error) {
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		req, err := makeReq()
+		if err != nil {
+			return nil, 0, err
+		}
+
+		resp, err := c.http.Do(req)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		if resp.StatusCode == http.StatusTooManyRequests {
+			wait := calcRetryWait(resp)
+			resp.Body.Close()
+			if attempt == maxRetries {
+				return nil, http.StatusTooManyRequests, fmt.Errorf("HTTP Error (429): rate limit exceeded after %d retries", maxRetries)
+			}
+			fmt.Fprintf(os.Stderr, "warning: rate limited, retrying in %s (attempt %d/%d)...\n", wait.Round(time.Second), attempt+1, maxRetries)
+			select {
+			case <-ctx.Done():
+				return nil, 0, ctx.Err()
+			case <-time.After(wait):
+			}
+			continue
+		}
+
+		body, readErr := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if readErr != nil {
+			return nil, resp.StatusCode, readErr
+		}
+		return body, resp.StatusCode, nil
+	}
+	return nil, 0, fmt.Errorf("unexpected exit from retry loop")
+}
+
+// calcRetryWait は 429 レスポンスから待機時間を算出する。
+// X-RateLimit-Reset ヘッダー（Unix 秒）があればリセット時刻まで待機。なければ固定 60 秒。
+func calcRetryWait(resp *http.Response) time.Duration {
+	resetStr := resp.Header.Get("X-RateLimit-Reset")
+	if resetStr != "" {
+		resetUnix, err := strconv.ParseInt(resetStr, 10, 64)
+		if err == nil {
+			wait := time.Until(time.Unix(resetUnix, 0))
+			if wait < time.Second {
+				wait = time.Second
+			}
+			return wait
+		}
+	}
+	return defaultRetryWait
+}
+
 func (c *httpClient) doGet(ctx context.Context, rawURL string, out any) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	body, status, err := c.doWithRetry(ctx, func() (*http.Request, error) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", c.apiKey)
+		return req, nil
+	})
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Authorization", c.apiKey)
-
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return err
+	if status == http.StatusNotFound {
+		return ErrNotFound
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		b, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("HTTP Error (%d): %s", resp.StatusCode, string(b))
+	if status >= 400 {
+		return fmt.Errorf("HTTP Error (%d): %s", status, string(body))
 	}
-
-	return json.NewDecoder(resp.Body).Decode(out)
+	return json.Unmarshal(body, out)
 }
 
 func filterByQuery(tasks []models.TaskSummary, query string) []models.TaskSummary {
