@@ -66,10 +66,9 @@ type TimeEntry struct {
     TaskName   string
     UserID     string
     UserName   string
-    Billable   bool
     Start      time.Time
     End        time.Time
-    DurationMs int64   // 元の duration（ms）
+    DurationMs int64   // 元の duration（ms）。負値 = running timer
     // task_location から取得したリスト情報（フォールバック用）
     ListID     string
     ListName   string
@@ -137,9 +136,18 @@ type TimeReportRow struct {
     ClippedStart       time.Time `json:"clippedStart"`
     ClippedEnd         time.Time `json:"clippedEnd"`
     ClippedDurationMs  int64     `json:"clippedDurationMs"`
-    Billable           bool      `json:"billable"`
 }
 ```
+
+### Breakdown の多段階層について
+
+`Breakdown` は常にフラット（1段のみ）。recorded task = 実際に time entry が記録されたタスクを直接ネストする。
+
+例: タスク階層が `A → B → C → D`（4段）で D に time entry が記録されている場合：
+- top-level task = `A`
+- breakdown = `[D]`（中間の B・C は表示しない）
+
+parent chain は top-level task の解決のためだけに使用し、中間層はレポート出力に含めない。
 
 ---
 
@@ -225,7 +233,6 @@ type rawTimeEntry struct {
     ID           string              `json:"id"`
     Task         *rawEntryTask       `json:"task"`
     User         rawEntryUser        `json:"user"`
-    Billable     bool                `json:"billable"`
     Start        string              `json:"start"`  // Unix ms 文字列
     End          string              `json:"end"`    // Unix ms 文字列（running timer は "0" か空）
     Duration     string              `json:"duration"` // 負値 = running timer
@@ -288,6 +295,26 @@ type rawTimeEntryLocation struct {
 ```
 
 `--rows` 有効時は `rows` フィールドが追加される。無効時はフィールドごと省略（`omitempty`）。
+
+---
+
+## 429 レート制限リトライ（全 API 呼び出し共通）
+
+ClickUp API は `100 requests / minute / token` のレート制限を持つ。`doGet` および POST/PUT の全 HTTP 呼び出しに共通のリトライ処理を組み込む。
+
+### リトライ仕様
+
+- 対象: HTTP 429 レスポンス
+- 最大リトライ回数: 3 回（初回 + 3 = 計4回まで試みる）
+- 待機時間の決定:
+  1. レスポンスの `Retry-After` ヘッダー（秒単位）があれば、その値を使用
+  2. なければ固定 60 秒待機
+- 待機中は stderr に警告メッセージを出力（例: `warning: rate limited, retrying in 60s (attempt 1/3)...`）
+- 3 回リトライしても 429 が続く場合はエラーとして返す
+
+### 実装方針
+
+`doGet` を共通リトライラッパーで包む形に変更し、POST/PUT でも同様のラッパーを使う。`context.Context` のキャンセルを尊重し、待機中でも `ctx.Done()` で中断できるようにする。
 
 ---
 
