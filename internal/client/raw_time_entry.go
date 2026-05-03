@@ -15,7 +15,7 @@ type rawTimeEntry struct {
 	Task         *rawEntryTask        `json:"task"`
 	User         rawEntryUser         `json:"user"`
 	Start        json.Number          `json:"start"`    // Unix ms（API は integer または string を返す）
-	End          json.Number          `json:"end"`      // Unix ms
+	End          json.Number          `json:"end"`      // Unix ms。running timer の場合は "0" または省略される → models.TimeEntry.End は epoch になる
 	Duration     string               `json:"duration"` // ms 文字列。負値 = running timer
 	TaskLocation rawTimeEntryLocation `json:"task_location"`
 }
@@ -26,7 +26,7 @@ type rawEntryTask struct {
 }
 
 type rawEntryUser struct {
-	ID       int    `json:"id"`
+	ID       int    `json:"id"`       // time entries API は数値で返す（task API の文字列 ID とは異なる）
 	Username string `json:"username"`
 }
 

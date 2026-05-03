@@ -2,6 +2,7 @@
 package client
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -280,4 +281,113 @@ func TestMapToRawCreateBody_CustomItemID_Nil(t *testing.T) {
 	body := mapToRawCreateBody(req)
 
 	assert.Nil(t, body.CustomItemID)
+}
+
+// Helper to create rawTimeEntry from JSON string
+func makeRawTimeEntry(jsonStr string) rawTimeEntry {
+	var r rawTimeEntry
+	if err := json.Unmarshal([]byte(jsonStr), &r); err != nil {
+		panic(err)
+	}
+	return r
+}
+
+func TestToTimeEntry_HappyPath(t *testing.T) {
+	raw := makeRawTimeEntry(`{
+		"id": "entry1",
+		"task": {"id": "task1", "name": "My Task"},
+		"user": {"id": 42, "username": "alice"},
+		"start": 1700000000000,
+		"end": 1700003600000,
+		"duration": "3600000",
+		"task_location": {"list_id": 99, "list_name": "My List"}
+	}`)
+	entry := toTimeEntry(raw)
+	assert.Equal(t, "entry1", entry.ID)
+	assert.Equal(t, "task1", entry.TaskID)
+	assert.Equal(t, "My Task", entry.TaskName)
+	assert.Equal(t, "42", entry.UserID)
+	assert.Equal(t, "alice", entry.UserName)
+	assert.Equal(t, int64(3600000), entry.DurationMs)
+	assert.Equal(t, "99", entry.ListID)
+	assert.Equal(t, "My List", entry.ListName)
+	assert.Equal(t, time.UnixMilli(1700000000000).UTC(), entry.Start)
+	assert.Equal(t, time.UnixMilli(1700003600000).UTC(), entry.End)
+}
+
+func TestToTimeEntry_NumericAsString(t *testing.T) {
+	// json.Number can be string-formatted values
+	raw := makeRawTimeEntry(`{
+		"id": "entry2",
+		"task": {"id": "task2", "name": "Task B"},
+		"user": {"id": 99, "username": "bob"},
+		"start": "1700000000000",
+		"end": "1700001800000",
+		"duration": "1800000",
+		"task_location": {"list_id": "42", "list_name": "List B"}
+	}`)
+	entry := toTimeEntry(raw)
+	assert.Equal(t, "entry2", entry.ID)
+	assert.Equal(t, "task2", entry.TaskID)
+	assert.Equal(t, "Task B", entry.TaskName)
+	assert.Equal(t, "99", entry.UserID)
+	assert.Equal(t, "bob", entry.UserName)
+	assert.Equal(t, int64(1800000), entry.DurationMs)
+	assert.Equal(t, "42", entry.ListID)
+	assert.Equal(t, "List B", entry.ListName)
+	assert.Equal(t, time.UnixMilli(1700000000000).UTC(), entry.Start)
+	assert.Equal(t, time.UnixMilli(1700001800000).UTC(), entry.End)
+}
+
+func TestToTimeEntry_NilTask(t *testing.T) {
+	// No task association
+	raw := makeRawTimeEntry(`{
+		"id": "entry3",
+		"task": null,
+		"user": {"id": 1, "username": "charlie"},
+		"start": 1700000000000,
+		"end": 1700000300000,
+		"duration": "300000",
+		"task_location": {"list_id": "10", "list_name": "General"}
+	}`)
+	entry := toTimeEntry(raw)
+	assert.Equal(t, "entry3", entry.ID)
+	assert.Equal(t, "", entry.TaskID)
+	assert.Equal(t, "", entry.TaskName)
+	assert.Equal(t, "1", entry.UserID)
+	assert.Equal(t, "charlie", entry.UserName)
+}
+
+func TestToTimeEntry_NegativeDuration(t *testing.T) {
+	// Running timer: duration < 0
+	raw := makeRawTimeEntry(`{
+		"id": "entry4",
+		"task": {"id": "task4", "name": "Active Task"},
+		"user": {"id": 5, "username": "dave"},
+		"start": 1700000000000,
+		"end": 0,
+		"duration": "-1700000300000",
+		"task_location": {"list_id": "20", "list_name": "Work"}
+	}`)
+	entry := toTimeEntry(raw)
+	assert.Equal(t, "entry4", entry.ID)
+	assert.Equal(t, int64(-1700000300000), entry.DurationMs)
+	// End should be epoch when "0"
+	assert.Equal(t, time.UnixMilli(0).UTC(), entry.End)
+}
+
+func TestToTimeEntry_ZeroEnd(t *testing.T) {
+	// Running timer convention: End = "0" → epoch
+	raw := makeRawTimeEntry(`{
+		"id": "entry5",
+		"task": {"id": "task5", "name": "Still Running"},
+		"user": {"id": 10, "username": "eve"},
+		"start": 1700000000000,
+		"end": 0,
+		"duration": "-123456",
+		"task_location": {"list_id": "30", "list_name": "Active"}
+	}`)
+	entry := toTimeEntry(raw)
+	assert.Equal(t, "entry5", entry.ID)
+	assert.Equal(t, time.UnixMilli(0).UTC(), entry.End)
 }
