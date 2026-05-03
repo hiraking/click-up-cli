@@ -12,7 +12,7 @@ type TimeEntry struct {
 	UserName   string
 	Start      time.Time
 	End        time.Time
-	DurationMs int64  // 元の duration（ms）。負値 = running timer
+	DurationMs int64 // 元の duration（ms）。負値 = running timer
 	// task_location から取得したリスト情報（フォールバック用）
 	ListID   string
 	ListName string
@@ -37,7 +37,7 @@ type TimePeriod struct {
 
 // TimeReportSummary は集計サマリー。
 type TimeReportSummary struct {
-	TotalDurationMin   int64 `json:"totalDurationMin"`   // 分単位（切り捨て）
+	TotalDurationMin   int64 `json:"totalDurationMin"` // 分単位（切り捨て）
 	ListCount          int   `json:"listCount"`
 	TopLevelTaskCount  int   `json:"topLevelTaskCount"`
 	BreakdownTaskCount int   `json:"breakdownTaskCount"`
@@ -47,7 +47,7 @@ type TimeReportSummary struct {
 type TimeReportList struct {
 	ListID      string           `json:"listId"`
 	ListName    string           `json:"listName"`
-	DurationMin int64            `json:"durationMin"`        // 分単位（切り捨て）
+	DurationMin int64            `json:"durationMin"` // 分単位（切り捨て）
 	Tasks       []TimeReportTask `json:"tasks"`
 }
 
@@ -55,7 +55,7 @@ type TimeReportList struct {
 type TimeReportTask struct {
 	TaskID      string                `json:"taskId"`
 	TaskName    string                `json:"taskName"`
-	DurationMin int64                 `json:"durationMin"`    // 分単位（切り捨て）
+	DurationMin int64                 `json:"durationMin"` // 分単位（切り捨て）
 	Breakdown   []TimeReportBreakdown `json:"breakdown"`
 }
 
@@ -65,7 +65,7 @@ type TimeReportTask struct {
 type TimeReportBreakdown struct {
 	TaskID      string `json:"taskId"`
 	TaskName    string `json:"taskName"`
-	DurationMin int64  `json:"durationMin"`                  // 分単位（切り捨て）
+	DurationMin int64  `json:"durationMin"` // 分単位（切り捨て）
 }
 
 // TimeReportRow は後続分析用の正規化済み明細行。
