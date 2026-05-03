@@ -196,6 +196,55 @@ clickup update-task 86exa7yq5 --clear due-date --clear priority
 
 ---
 
+### `time-report` — 時間集計レポートを生成
+
+```
+clickup time-report --start <ISO8601> --end <ISO8601> [options]
+```
+
+指定期間の time entries を集計し、List → Top-level task → Breakdown のツリー構造で JSON レポートを出力する。
+
+| オプション | 型 | 説明 |
+|---|---|---|
+| `--start <ISO8601>` | string | 集計開始日時（必須、半開区間の左端・含む） |
+| `--end <ISO8601>` | string | 集計終了日時（必須、半開区間の右端・含まない） |
+| `--output`, `-o <path>` | string | 出力ファイルパス。省略時は stdout |
+| `--rows` | bool | normalized rows を含めるかどうか（後述のデフォルト参照） |
+
+**`--rows` のデフォルト挙動:**
+
+- `--output` あり かつ `--rows` 未指定 → rows **含める**
+- `--output` なし かつ `--rows` 未指定 → rows **含めない**
+- `--rows` / `--rows=false` 明示指定 → その値で上書き
+
+**出力:** camelCase JSON。`hierarchy` フィールドに `List → Task → Breakdown` のツリー構造。
+
+> **日付のタイムゾーンについて:** オフセットなしで渡した場合は **JST (+09:00)** として扱われる。
+
+#### 使用例
+
+```bash
+# 週次レポートを stdout に出力（rows なし）
+clickup time-report \
+  --start "2026-04-27T00:00:00+09:00" \
+  --end   "2026-05-04T00:00:00+09:00"
+
+# ファイルに保存（rows も含める）
+clickup time-report \
+  --start "2026-04-27T00:00:00+09:00" \
+  --end   "2026-05-04T00:00:00+09:00" \
+  --output report.json
+
+# rows を明示的に除外してファイル出力
+clickup time-report \
+  --start "2026-04-27T00:00:00+09:00" \
+  --end   "2026-05-04T00:00:00+09:00" \
+  --output report.json \
+  --rows=false
+```
+
+---
+
 ## 出力フォーマット
 
 `TaskSummary` の camelCase JSON。
@@ -231,6 +280,7 @@ clickup update-task 86exa7yq5 --clear due-date --clear priority
 | 日付フォーマット不正 | `Error: '--due-after' value '...' is not a valid ISO 8601 datetime.` |
 | 不正な優先度 | `Error: Invalid priority 'foo'. Use urgent, high, normal, or low.` |
 | API エラー | `HTTP Error (404): ...` |
+| レート制限（429） | `warning: rate limited, retrying in 60s (attempt 1/3)...` を stderr に出力してリトライ。3 回失敗で `HTTP Error (429): rate limit exceeded after 3 retries` |
 
 ---
 
