@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/hiraking/click-up-client/internal/config"
+	"github.com/hiraking/click-up-cli/internal/config"
 )
 
 func loadConfig() (*config.AppConfig, error) {

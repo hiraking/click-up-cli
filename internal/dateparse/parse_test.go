@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hiraking/click-up-client/internal/dateparse"
+	"github.com/hiraking/click-up-cli/internal/dateparse"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

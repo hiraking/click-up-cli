@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/hiraking/click-up-client/internal/models"
+	"github.com/hiraking/click-up-cli/internal/models"
 )
 
 // toSummary は rawTask を models.TaskSummary に変換する。

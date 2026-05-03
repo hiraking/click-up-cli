@@ -1,4 +1,4 @@
-module github.com/hiraking/click-up-client
+module github.com/hiraking/click-up-cli
 
 go 1.26.2
 

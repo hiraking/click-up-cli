@@ -4,8 +4,8 @@ package tree_test
 import (
 	"testing"
 
-	"github.com/hiraking/click-up-client/internal/models"
-	"github.com/hiraking/click-up-client/internal/tree"
+	"github.com/hiraking/click-up-cli/internal/models"
+	"github.com/hiraking/click-up-cli/internal/tree"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

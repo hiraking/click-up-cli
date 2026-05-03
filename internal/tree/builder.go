@@ -1,7 +1,7 @@
 // internal/tree/builder.go
 package tree
 
-import "github.com/hiraking/click-up-client/internal/models"
+import "github.com/hiraking/click-up-cli/internal/models"
 
 // Build はフラットな TaskSummary スライスを受け取り、
 // 親子関係を解決したツリー構造として返す。

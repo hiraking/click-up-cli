@@ -4,7 +4,7 @@ package main
 import (
 	"context"
 
-	"github.com/hiraking/click-up-client/internal/client"
+	"github.com/hiraking/click-up-cli/internal/client"
 	"github.com/spf13/cobra"
 )
 

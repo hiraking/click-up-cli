@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hiraking/click-up-client/internal/models"
-	"github.com/hiraking/click-up-client/internal/tree"
+	"github.com/hiraking/click-up-cli/internal/models"
+	"github.com/hiraking/click-up-cli/internal/tree"
 )
 
 const baseURL = "https://api.clickup.com/api/"

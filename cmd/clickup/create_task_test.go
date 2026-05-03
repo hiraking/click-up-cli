@@ -4,7 +4,7 @@ package main
 import (
 	"testing"
 
-	"github.com/hiraking/click-up-client/internal/models"
+	"github.com/hiraking/click-up-cli/internal/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hiraking/click-up-client/internal/client"
-	"github.com/hiraking/click-up-client/internal/dateparse"
-	"github.com/hiraking/click-up-client/internal/models"
+	"github.com/hiraking/click-up-cli/internal/client"
+	"github.com/hiraking/click-up-cli/internal/dateparse"
+	"github.com/hiraking/click-up-cli/internal/models"
 	"github.com/spf13/cobra"
 )
 
