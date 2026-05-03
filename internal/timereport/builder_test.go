@@ -313,7 +313,6 @@ func TestBuild_Rows_ContainClippedData(t *testing.T) {
 	require.Len(t, report.Rows, 1)
 	row := report.Rows[0]
 	assert.Equal(t, "e1", row.TimeEntryID)
-	assert.Equal(t, "user1", row.UserID)
 	assert.Equal(t, "t1", row.TopLevelTaskID)
 	assert.Equal(t, "t1", row.RecordedTaskID)
 	assert.Equal(t, int64(10800000), row.OriginalDurationMs)

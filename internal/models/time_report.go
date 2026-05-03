@@ -71,8 +71,6 @@ type TimeReportBreakdown struct {
 // TimeReportRow は後続分析用の正規化済み明細行。
 type TimeReportRow struct {
 	TimeEntryID        string    `json:"timeEntryId"`
-	UserID             string    `json:"userId"`
-	UserName           string    `json:"userName"`
 	ListID             string    `json:"listId"`
 	ListName           string    `json:"listName"`
 	TopLevelTaskID     string    `json:"topLevelTaskId"`

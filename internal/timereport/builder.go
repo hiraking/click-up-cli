@@ -194,8 +194,6 @@ func Build(
 
 		rows = append(rows, models.TimeReportRow{
 			TimeEntryID:        e.ID,
-			UserID:             e.UserID,
-			UserName:           e.UserName,
 			ListID:             listID,
 			ListName:           listName,
 			TopLevelTaskID:     topTaskID,
