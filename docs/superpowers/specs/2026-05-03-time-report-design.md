@@ -307,7 +307,7 @@ ClickUp API は `100 requests / minute / token` のレート制限を持つ。`d
 - 対象: HTTP 429 レスポンス
 - 最大リトライ回数: 3 回（初回 + 3 = 計4回まで試みる）
 - 待機時間の決定:
-  1. レスポンスの `Retry-After` ヘッダー（秒単位）があれば、その値を使用
+  1. レスポンスの `X-RateLimit-Reset` ヘッダー（Unix タイムスタンプ秒）があれば、`reset_time - now` を待機時間として計算（最低1秒）
   2. なければ固定 60 秒待機
 - 待機中は stderr に警告メッセージを出力（例: `warning: rate limited, retrying in 60s (attempt 1/3)...`）
 - 3 回リトライしても 429 が続く場合はエラーとして返す
