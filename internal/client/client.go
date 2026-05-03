@@ -124,6 +124,9 @@ func (c *httpClient) CreateTask(ctx context.Context, listID string, req models.C
 	if err != nil {
 		return models.TaskSummary{}, err
 	}
+	if status == http.StatusNotFound {
+		return models.TaskSummary{}, ErrNotFound
+	}
 	if status >= 400 {
 		return models.TaskSummary{}, fmt.Errorf("HTTP Error (%d): %s", status, string(respBody))
 	}
@@ -156,6 +159,9 @@ func (c *httpClient) UpdateTask(ctx context.Context, taskID string, req models.U
 	if err != nil {
 		return models.TaskSummary{}, err
 	}
+	if status == http.StatusNotFound {
+		return models.TaskSummary{}, ErrNotFound
+	}
 	if status >= 400 {
 		return models.TaskSummary{}, fmt.Errorf("HTTP Error (%d): %s", status, string(respBody))
 	}
@@ -168,6 +174,9 @@ func (c *httpClient) UpdateTask(ctx context.Context, taskID string, req models.U
 }
 
 func (c *httpClient) GetTimeEntries(ctx context.Context, teamID string, opts GetTimeEntriesOptions) ([]models.TimeEntry, error) {
+	// fetchBuffer widens the API query window so that time entries whose
+	// start_date falls just outside the requested range but whose duration
+	// overlaps it are included. The builder clips entries to [opts.Start, opts.End].
 	const fetchBuffer = 3 * time.Hour
 	fetchStart := opts.Start.Add(-fetchBuffer)
 	fetchEnd := opts.End.Add(fetchBuffer)
@@ -194,6 +203,7 @@ func (c *httpClient) GetTimeEntries(ctx context.Context, teamID string, opts Get
 // doWithRetry は HTTP リクエストを実行し、429 の場合はリトライする。
 // 成功時はレスポンスボディと HTTP ステータスコードを返す。
 func (c *httpClient) doWithRetry(ctx context.Context, makeReq func() (*http.Request, error)) ([]byte, int, error) {
+	// attempt 0 is the initial request; attempts 1..maxRetries are retries
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		req, err := makeReq()
 		if err != nil {
