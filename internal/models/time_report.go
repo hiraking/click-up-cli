@@ -56,7 +56,7 @@ type TimeReportTask struct {
 	TaskID      string                `json:"taskId"`
 	TaskName    string                `json:"taskName"`
 	DurationMin int64                 `json:"durationMin"` // 分単位（切り捨て）
-	Breakdown   []TimeReportBreakdown `json:"breakdown"`
+	Breakdown   []TimeReportBreakdown `json:"breakdown,omitempty"`
 }
 
 // TimeReportBreakdown は recorded task 単位の内訳。

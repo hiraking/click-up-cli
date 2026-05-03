@@ -218,14 +218,24 @@ func Build(
 	for _, lid := range listOrder {
 		var tasks []models.TimeReportTask
 		for _, tid := range taskOrder[lid] {
-			var breakdown []models.TimeReportBreakdown
+			// Only populate breakdown when at least one recorded task differs from the top-level task.
+			hasSubtask := false
 			for _, rid := range bdOrder[tid] {
-				breakdown = append(breakdown, models.TimeReportBreakdown{
-					TaskID:      rid,
-					TaskName:    bdNames[rid],
-					DurationMin: bdDur[bk{tid, rid}] / 60000,
-				})
-				breakdownCount++
+				if rid != tid {
+					hasSubtask = true
+					break
+				}
+			}
+			var breakdown []models.TimeReportBreakdown
+			if hasSubtask {
+				for _, rid := range bdOrder[tid] {
+					breakdown = append(breakdown, models.TimeReportBreakdown{
+						TaskID:      rid,
+						TaskName:    bdNames[rid],
+						DurationMin: bdDur[bk{tid, rid}] / 60000,
+					})
+					breakdownCount++
+				}
 			}
 			tasks = append(tasks, models.TimeReportTask{
 				TaskID:      tid,

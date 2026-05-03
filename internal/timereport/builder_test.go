@@ -150,8 +150,8 @@ func TestBuild_DuplicateEntriesDeduped(t *testing.T) {
 	assert.Len(t, report.Rows, 1)
 }
 
-func TestBuild_TopLevelTask_BreakdownIsSelf(t *testing.T) {
-	// top-level task に直接 time entry が記録された場合、breakdown はその task 自身
+func TestBuild_TopLevelTask_NoBreakdown(t *testing.T) {
+	// top-level task に直接 time entry が記録された場合、サブタスクがないので breakdown は nil
 	entry := makeEntry("e1", "t1",
 		time.Date(2026, 4, 28, 9, 0, 0, 0, jst),
 		time.Date(2026, 4, 28, 10, 0, 0, 0, jst),
@@ -174,10 +174,9 @@ func TestBuild_TopLevelTask_BreakdownIsSelf(t *testing.T) {
 	assert.Equal(t, "t1", task.TaskID)
 	assert.Equal(t, int64(60), task.DurationMin)
 
-	// top-level task に直接記録 → breakdown は自分自身
-	require.Len(t, task.Breakdown, 1)
-	assert.Equal(t, "t1", task.Breakdown[0].TaskID)
-	assert.Equal(t, int64(60), task.Breakdown[0].DurationMin)
+	// サブタスクなし → breakdown は nil（JSON 出力から除外）
+	assert.Nil(t, task.Breakdown)
+	assert.Equal(t, 0, report.Summary.BreakdownTaskCount)
 }
 
 func TestBuild_SubtaskResolvesToTopLevel(t *testing.T) {
@@ -249,7 +248,7 @@ func TestBuild_MultipleEntries_Summary(t *testing.T) {
 	assert.Equal(t, int64(180), report.Summary.TotalDurationMin)
 	assert.Equal(t, 2, report.Summary.ListCount)
 	assert.Equal(t, 2, report.Summary.TopLevelTaskCount)
-	assert.Equal(t, 2, report.Summary.BreakdownTaskCount)
+	assert.Equal(t, 0, report.Summary.BreakdownTaskCount)
 }
 
 func TestBuild_TaskCachePreventsDoubleFetch(t *testing.T) {
