@@ -421,7 +421,7 @@ type TimePeriod struct {
 
 // TimeReportSummary は集計サマリー。
 type TimeReportSummary struct {
-	TotalDurationMs    int64 `json:"totalDurationMs"`
+	TotalDurationMin   int64 `json:"totalDurationMin"`   // 分単位（切り捨て）
 	ListCount          int   `json:"listCount"`
 	TopLevelTaskCount  int   `json:"topLevelTaskCount"`
 	BreakdownTaskCount int   `json:"breakdownTaskCount"`
@@ -429,27 +429,27 @@ type TimeReportSummary struct {
 
 // TimeReportList は List 単位の集計。
 type TimeReportList struct {
-	ListID     string           `json:"listId"`
-	ListName   string           `json:"listName"`
-	DurationMs int64            `json:"durationMs"`
-	Tasks      []TimeReportTask `json:"tasks"`
+	ListID      string           `json:"listId"`
+	ListName    string           `json:"listName"`
+	DurationMin int64            `json:"durationMin"`        // 分単位（切り捨て）
+	Tasks       []TimeReportTask `json:"tasks"`
 }
 
 // TimeReportTask は top-level task 単位の集計。
 type TimeReportTask struct {
-	TaskID     string                `json:"taskId"`
-	TaskName   string                `json:"taskName"`
-	DurationMs int64                 `json:"durationMs"`
-	Breakdown  []TimeReportBreakdown `json:"breakdown"`
+	TaskID      string                `json:"taskId"`
+	TaskName    string                `json:"taskName"`
+	DurationMin int64                 `json:"durationMin"`    // 分単位（切り捨て）
+	Breakdown   []TimeReportBreakdown `json:"breakdown"`
 }
 
 // TimeReportBreakdown は recorded task 単位の内訳。
 // Breakdown は常にフラット（1段）: recorded task = 実際に time entry が記録されたタスク。
 // タスク階層が何段あっても top-level task の直下に recorded task が並ぶ。
 type TimeReportBreakdown struct {
-	TaskID     string `json:"taskId"`
-	TaskName   string `json:"taskName"`
-	DurationMs int64  `json:"durationMs"`
+	TaskID      string `json:"taskId"`
+	TaskName    string `json:"taskName"`
+	DurationMin int64  `json:"durationMin"`                  // 分単位（切り捨て）
 }
 
 // TimeReportRow は後続分析用の正規化済み明細行。
@@ -663,7 +663,7 @@ func TestBuild_EmptyEntries(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, report.SchemaVersion)
 	assert.Empty(t, report.Hierarchy)
-	assert.Equal(t, int64(0), report.Summary.TotalDurationMs)
+	assert.Equal(t, int64(0), report.Summary.TotalDurationMin)
 	assert.Equal(t, 0, report.Summary.ListCount)
 }
 
@@ -676,7 +676,7 @@ func TestBuild_RunningTimerExcluded(t *testing.T) {
 	report, err := timereport.Build(context.Background(), []models.TimeEntry{running}, reportStart, reportEnd, noFetch)
 	require.NoError(t, err)
 	assert.Empty(t, report.Hierarchy)
-	assert.Equal(t, int64(0), report.Summary.TotalDurationMs)
+	assert.Equal(t, int64(0), report.Summary.TotalDurationMin)
 }
 
 func TestBuild_EntryFullyOutsideRange(t *testing.T) {
@@ -705,8 +705,8 @@ func TestBuild_EntryClippedAtStart(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, report.Hierarchy, 1)
-	assert.Equal(t, int64(3600000), report.Summary.TotalDurationMs)
-	assert.Equal(t, int64(3600000), report.Hierarchy[0].DurationMs)
+	assert.Equal(t, int64(60), report.Summary.TotalDurationMin)
+	assert.Equal(t, int64(60), report.Hierarchy[0].DurationMin)
 
 	row := report.Rows[0]
 	assert.Equal(t, int64(10800000), row.OriginalDurationMs)
@@ -727,7 +727,7 @@ func TestBuild_EntryClippedAtEnd(t *testing.T) {
 	report, err := timereport.Build(context.Background(), []models.TimeEntry{entry}, reportStart, reportEnd, mapFetch(tasks))
 	require.NoError(t, err)
 
-	assert.Equal(t, int64(3600000), report.Summary.TotalDurationMs)
+	assert.Equal(t, int64(60), report.Summary.TotalDurationMin)
 	row := report.Rows[0]
 	assert.Equal(t, reportEnd, row.ClippedEnd)
 }
@@ -744,7 +744,7 @@ func TestBuild_DuplicateEntriesDeduped(t *testing.T) {
 	// 同一エントリを2回渡す → 1回分だけ集計
 	report, err := timereport.Build(context.Background(), []models.TimeEntry{e1, e1}, reportStart, reportEnd, mapFetch(tasks))
 	require.NoError(t, err)
-	assert.Equal(t, int64(3600000), report.Summary.TotalDurationMs)
+	assert.Equal(t, int64(60), report.Summary.TotalDurationMin)
 	assert.Len(t, report.Rows, 1)
 }
 
@@ -765,17 +765,17 @@ func TestBuild_TopLevelTask_BreakdownIsSelf(t *testing.T) {
 	list := report.Hierarchy[0]
 	assert.Equal(t, "list1", list.ListID)
 	assert.Equal(t, "My List", list.ListName)
-	assert.Equal(t, int64(3600000), list.DurationMs)
+	assert.Equal(t, int64(60), list.DurationMin)
 
 	require.Len(t, list.Tasks, 1)
 	task := list.Tasks[0]
 	assert.Equal(t, "t1", task.TaskID)
-	assert.Equal(t, int64(3600000), task.DurationMs)
+	assert.Equal(t, int64(60), task.DurationMin)
 
 	// top-level task に直接記録 → breakdown は自分自身
 	require.Len(t, task.Breakdown, 1)
 	assert.Equal(t, "t1", task.Breakdown[0].TaskID)
-	assert.Equal(t, int64(3600000), task.Breakdown[0].DurationMs)
+	assert.Equal(t, int64(60), task.Breakdown[0].DurationMin)
 }
 
 func TestBuild_SubtaskResolvesToTopLevel(t *testing.T) {
@@ -798,7 +798,7 @@ func TestBuild_SubtaskResolvesToTopLevel(t *testing.T) {
 	require.Len(t, report.Hierarchy[0].Tasks, 1)
 	task := report.Hierarchy[0].Tasks[0]
 	assert.Equal(t, "top1", task.TaskID)
-	assert.Equal(t, int64(7200000), task.DurationMs)
+	assert.Equal(t, int64(120), task.DurationMin)
 
 	require.Len(t, task.Breakdown, 1)
 	assert.Equal(t, "sub1", task.Breakdown[0].TaskID)
@@ -844,7 +844,7 @@ func TestBuild_MultipleEntries_Summary(t *testing.T) {
 	report, err := timereport.Build(context.Background(), entries, reportStart, reportEnd, mapFetch(tasks))
 	require.NoError(t, err)
 
-	assert.Equal(t, int64(10800000), report.Summary.TotalDurationMs)
+	assert.Equal(t, int64(180), report.Summary.TotalDurationMin)
 	assert.Equal(t, 2, report.Summary.ListCount)
 	assert.Equal(t, 2, report.Summary.TopLevelTaskCount)
 	assert.Equal(t, 2, report.Summary.BreakdownTaskCount)
@@ -874,7 +874,7 @@ func TestBuild_TaskCachePreventsDoubleFetch(t *testing.T) {
 
 	// sub1 と top1 をそれぞれ 1 回ずつ = 計 2 回
 	assert.Equal(t, 2, fetchCount)
-	assert.Equal(t, int64(7200000), report.Summary.TotalDurationMs)
+	assert.Equal(t, int64(120), report.Summary.TotalDurationMin)
 }
 
 func TestBuild_ListFallback_UsesEntryList(t *testing.T) {
@@ -1155,25 +1155,25 @@ func Build(
 			var breakdown []models.TimeReportBreakdown
 			for _, rid := range bdOrder[tid] {
 				breakdown = append(breakdown, models.TimeReportBreakdown{
-					TaskID:     rid,
-					TaskName:   bdNames[rid],
-					DurationMs: bdDur[bk{tid, rid}],
+					TaskID:      rid,
+					TaskName:    bdNames[rid],
+					DurationMin: bdDur[bk{tid, rid}] / 60000,
 				})
 				breakdownCount++
 			}
 			tasks = append(tasks, models.TimeReportTask{
-				TaskID:     tid,
-				TaskName:   taskNames[tid],
-				DurationMs: taskDur[tid],
-				Breakdown:  breakdown,
+				TaskID:      tid,
+				TaskName:    taskNames[tid],
+				DurationMin: taskDur[tid] / 60000,
+				Breakdown:   breakdown,
 			})
 			topLevelCount++
 		}
 		lists = append(lists, models.TimeReportList{
-			ListID:     lid,
-			ListName:   listNames[lid],
-			DurationMs: listDur[lid],
-			Tasks:      tasks,
+			ListID:      lid,
+			ListName:    listNames[lid],
+			DurationMin: listDur[lid] / 60000,
+			Tasks:       tasks,
 		})
 	}
 
@@ -1190,7 +1190,7 @@ func Build(
 			Timezone: start.Location().String(),
 		},
 		Summary: models.TimeReportSummary{
-			TotalDurationMs:    totalDurMs,
+			TotalDurationMin:   totalDurMs / 60000,
 			ListCount:          len(lists),
 			TopLevelTaskCount:  topLevelCount,
 			BreakdownTaskCount: breakdownCount,

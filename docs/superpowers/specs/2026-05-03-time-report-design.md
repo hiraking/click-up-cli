@@ -94,30 +94,30 @@ type TimePeriod struct {
 }
 
 type TimeReportSummary struct {
-    TotalDurationMs    int64 `json:"totalDurationMs"`
+    TotalDurationMin   int64 `json:"totalDurationMin"`   // 分単位（最近傍丸め）
     ListCount          int   `json:"listCount"`
     TopLevelTaskCount  int   `json:"topLevelTaskCount"`
     BreakdownTaskCount int   `json:"breakdownTaskCount"`
 }
 
 type TimeReportList struct {
-    ListID     string           `json:"listId"`
-    ListName   string           `json:"listName"`
-    DurationMs int64            `json:"durationMs"`
-    Tasks      []TimeReportTask `json:"tasks"`
+    ListID      string           `json:"listId"`
+    ListName    string           `json:"listName"`
+    DurationMin int64            `json:"durationMin"`        // 分単位（最近傍丸め）
+    Tasks       []TimeReportTask `json:"tasks"`
 }
 
 type TimeReportTask struct {
-    TaskID     string                  `json:"taskId"`
-    TaskName   string                  `json:"taskName"`
-    DurationMs int64                   `json:"durationMs"`
-    Breakdown  []TimeReportBreakdown   `json:"breakdown"`
+    TaskID      string                `json:"taskId"`
+    TaskName    string                `json:"taskName"`
+    DurationMin int64                 `json:"durationMin"`    // 分単位（最近傍丸め）
+    Breakdown   []TimeReportBreakdown `json:"breakdown"`
 }
 
 type TimeReportBreakdown struct {
-    TaskID     string `json:"taskId"`
-    TaskName   string `json:"taskName"`
-    DurationMs int64  `json:"durationMs"`
+    TaskID      string `json:"taskId"`
+    TaskName    string `json:"taskName"`
+    DurationMin int64  `json:"durationMin"`                  // 分単位（最近傍丸め）
 }
 
 type TimeReportRow struct {
@@ -192,9 +192,9 @@ func Build(
    ```
 6. **階層構築**:
    - List → TopLevelTask → BreakdownTask の Map を構築してから []スライスへ変換
-   - durationMs は clippedDuration の合計
+   - 内部は ms で累計し、最終的に `/60000` で分に切り捨て変換して `durationMin` に格納
 7. **rows 構築**: 各エントリを `TimeReportRow` に変換
-8. **summary 集計**: totalDurationMs / 各カウント
+8. **summary 集計**: `totalDurationMin`（`totalDurMs / 60000`） / 各カウント
 
 ### Task が存在しないエントリの扱い
 
@@ -269,7 +269,7 @@ type rawTimeEntryLocation struct {
     "timezone": "Asia/Tokyo"
   },
   "summary": {
-    "totalDurationMs": 126000000,
+    "totalDurationMin": 2100,
     "listCount": 3,
     "topLevelTaskCount": 12,
     "breakdownTaskCount": 28
@@ -278,14 +278,14 @@ type rawTimeEntryLocation struct {
     {
       "listId": "list_1",
       "listName": "Product Development",
-      "durationMs": 72000000,
+      "durationMin": 1200,
       "tasks": [
         {
           "taskId": "task_parent_1",
           "taskName": "新料金ページ改善",
-          "durationMs": 28800000,
+          "durationMin": 480,
           "breakdown": [
-            { "taskId": "subtask_1", "taskName": "UI実装", "durationMs": 18000000 }
+            { "taskId": "subtask_1", "taskName": "UI実装", "durationMin": 300 }
           ]
         }
       ]
