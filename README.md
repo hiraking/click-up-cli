@@ -33,8 +33,6 @@ go install ./cmd/clickup
 | `teamId` | ワークスペース ID（URL の `/w/{teamId}/` から確認） |
 | `lists` | リスト名 → リスト ID のマッピング。`--list` オプションで名前を指定するために使う |
 
-> `config.json` はリポジトリ外（`~/.clickup/config.json`）に配置するため、コミットされない。
-
 ### 3. 設定値の上書き
 
 環境変数または `--config` フラグで設定を上書きできる。
@@ -112,7 +110,7 @@ clickup create-task <name> --list <name> [options]
 | 引数/オプション | 型 | 説明 |
 |---|---|---|
 | `name` | string | タスク名（必須） |
-| `--list <name>` | string | 作成先リスト名（必須） |
+| `--list <name>` | string | 作成先リスト名（必須）。`config.json` の `lists` キー（例: `work`, `study`） |
 | `--description <text>` | string | タスクの説明 |
 | `--parent <taskId>` | string | 親タスク ID。指定するとサブタスクとして作成 |
 | `--status <name>` | string | ステータス名（例: `"to do"`, `"in progress"`） |
@@ -297,7 +295,7 @@ clickup time-report \
 
 | ケース | メッセージ例 |
 |---|---|
-| `config.json` が見つからない | `config file not found: ...` |
+| `--config` / `CLICKUP_CONFIG` で指定したファイルが存在しない | `config file not found: ...` |
 | 不明なリスト名 | `Error: Unknown list name 'foo'. Available: work, study` |
 | 日付フォーマット不正 | `Error: '--due-after' value '...' is not a valid ISO 8601 datetime.` |
 | 不正な優先度 | `Error: Invalid priority 'foo'. Use urgent, high, normal, or low.` |
