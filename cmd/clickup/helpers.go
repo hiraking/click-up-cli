@@ -12,11 +12,30 @@ import (
 )
 
 func loadConfig() (*config.AppConfig, error) {
+	return config.Load(resolveConfigPath())
+}
+
+// resolveConfigPath はconfig fileのパスを次の優先順位で決定する:
+//  1. --config フラグ（明示的・ファイル必須）
+//  2. CLICKUP_CONFIG 環境変数（明示的・ファイル必須）
+//  3. ~/.clickup/config.json（デフォルト・存在する場合のみ）
+//  4. "" （ファイルなし・env var のみで動作）
+func resolveConfigPath() string {
+	if configPath != "" {
+		return configPath
+	}
+	if env := os.Getenv("CLICKUP_CONFIG"); env != "" {
+		return env
+	}
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return nil, err
+		return ""
 	}
-	return config.Load(filepath.Join(home, ".clickup", "config.json"))
+	defaultPath := filepath.Join(home, ".clickup", "config.json")
+	if _, err := os.Stat(defaultPath); os.IsNotExist(err) {
+		return ""
+	}
+	return defaultPath
 }
 
 func printJSON(v any) error {
