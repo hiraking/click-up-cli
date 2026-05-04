@@ -83,7 +83,7 @@ rootCmd.PersistentFlags().StringVar(&configPath, "config", "", "config file path
 path 決定:
   1. configPath フラグ変数 → あればそのまま使用
   2. CLICKUP_CONFIG env var → あればそのまま使用
-  3. ~/. clickup/config.json を stat チェック
+  3. ~/.clickup/config.json を stat チェック
      → 存在すれば使用、存在しなければ "" を渡す
 
 → config.Load(path) を呼ぶ
