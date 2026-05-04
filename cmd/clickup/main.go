@@ -8,6 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var configPath string
+
 func main() {
 	rootCmd := &cobra.Command{
 		Use:           "clickup",
@@ -15,6 +17,8 @@ func main() {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
+
+	rootCmd.PersistentFlags().StringVar(&configPath, "config", "", "config file path (default: ~/.clickup/config.json)")
 
 	rootCmd.AddCommand(newGetTaskCmd())
 	rootCmd.AddCommand(newGetTasksCmd())
