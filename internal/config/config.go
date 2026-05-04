@@ -15,28 +15,38 @@ type AppConfig struct {
 	Lists  map[string]string `mapstructure:"lists"`
 }
 
-// Load は指定パスの JSON 設定ファイルを読み込み AppConfig を返す。
-// ファイルが存在しない場合は os.ErrNotExist でラップしたエラーを返す。
+// Load は設定を読み込む。path が空のときはファイルを読まず env var のみを使う。
+// path が指定された場合はファイルを必須とする。
+// CLICKUP_API_KEY / CLICKUP_TEAM_ID 環境変数はファイルの値を上書きする。
 // apiKey または teamId が空の場合はバリデーションエラーを返す。
 func Load(path string) (*AppConfig, error) {
 	v := viper.New()
-	v.SetConfigFile(path)
 
-	if err := v.ReadInConfig(); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("config file not found: %w", os.ErrNotExist)
+	if path != "" {
+		v.SetConfigFile(path)
+
+		if err := v.ReadInConfig(); err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				return nil, fmt.Errorf("config file not found: %w", os.ErrNotExist)
+			}
+			var pathErr *os.PathError
+			if errors.As(err, &pathErr) {
+				return nil, fmt.Errorf("config file not found: %w", os.ErrNotExist)
+			}
+			return nil, fmt.Errorf("failed to read config: %w", err)
 		}
-		// viper が返す *os.PathError をチェック
-		var pathErr *os.PathError
-		if errors.As(err, &pathErr) {
-			return nil, fmt.Errorf("config file not found: %w", os.ErrNotExist)
-		}
-		return nil, fmt.Errorf("failed to read config: %w", err)
 	}
 
 	var cfg AppConfig
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("failed to parse config: %w", err)
+	}
+
+	if key := os.Getenv("CLICKUP_API_KEY"); key != "" {
+		cfg.APIKey = key
+	}
+	if team := os.Getenv("CLICKUP_TEAM_ID"); team != "" {
+		cfg.TeamID = team
 	}
 
 	if cfg.APIKey == "" {
