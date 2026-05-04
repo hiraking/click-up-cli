@@ -35,6 +35,28 @@ go install ./cmd/clickup
 
 > `config.json` はリポジトリ外（`~/.clickup/config.json`）に配置するため、コミットされない。
 
+### 3. 設定値の上書き
+
+環境変数または `--config` フラグで設定を上書きできる。
+
+**環境変数**
+
+| 環境変数 | 対応フィールド | 説明 |
+|---|---|---|
+| `CLICKUP_API_KEY` | `apiKey` | config file の値より優先される |
+| `CLICKUP_TEAM_ID` | `teamId` | config file の値より優先される |
+| `CLICKUP_CONFIG` | 設定ファイルのパス | `--config` フラグより低優先 |
+
+> `CLICKUP_API_KEY` と `CLICKUP_TEAM_ID` が両方設定されていれば、config file がなくても動作する。
+
+**`--config` フラグ**
+
+```bash
+clickup --config /path/to/config.json get-tasks
+```
+
+すべてのサブコマンドで使用できる。優先順位: `--config` フラグ > `CLICKUP_CONFIG` 環境変数 > `~/.clickup/config.json`
+
 ---
 
 ## コマンドリファレンス
