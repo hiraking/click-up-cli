@@ -8,6 +8,9 @@ import (
 	"github.com/spf13/viper"
 )
 
+// ErrConfigNotFound は設定ファイルが見つからないことを示すセンチネルエラー。
+var ErrConfigNotFound = errors.New("config: file not found")
+
 // AppConfig はアプリケーション設定を表す。
 type AppConfig struct {
 	APIKey string            `mapstructure:"apiKey"`
@@ -27,11 +30,11 @@ func Load(path string) (*AppConfig, error) {
 
 		if err := v.ReadInConfig(); err != nil {
 			if errors.Is(err, os.ErrNotExist) {
-				return nil, fmt.Errorf("config file not found: %w", os.ErrNotExist)
+				return nil, fmt.Errorf("config file not found: %w", ErrConfigNotFound)
 			}
 			var pathErr *os.PathError
-			if errors.As(err, &pathErr) {
-				return nil, fmt.Errorf("config file not found: %w", os.ErrNotExist)
+			if errors.As(err, &pathErr) && errors.Is(pathErr.Err, os.ErrNotExist) {
+				return nil, fmt.Errorf("config file not found: %w", ErrConfigNotFound)
 			}
 			return nil, fmt.Errorf("failed to read config: %w", err)
 		}
