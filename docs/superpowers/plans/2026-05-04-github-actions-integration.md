@@ -18,6 +18,7 @@
 | `internal/config/config.go` | 修正 | 空パス対応 + env var オーバーライド |
 | `cmd/clickup/main.go` | 修正 | `--config` persistent flag 追加 |
 | `cmd/clickup/helpers.go` | 修正 | `resolveConfigPath()` 追加、`loadConfig()` 修正 |
+| `README.md` | 修正 | 環境変数・`--config` フラグ・GitHub Actions 使用例を追記 |
 
 ---
 
@@ -347,4 +348,100 @@ Expected: JSON レポートが stdout に出力される（config file なしで
 ```
 git add cmd/clickup/helpers.go
 git commit -m "feat: resolve config path via --config flag, CLICKUP_CONFIG env var, or default"
+```
+
+---
+
+## Task 4: README.md を更新する
+
+**Files:**
+- Modify: `README.md`
+
+---
+
+- [ ] **Step 1: 「セットアップ」セクションに env var と `--config` の説明を追加する**
+
+README.md の以下の行（`> \`config.json\` はリポジトリ外...` の注記の直後）に追記する:
+
+```markdown
+### 3. 環境変数（CI / GitHub Actions 向け）
+
+設定ファイルを置かずに環境変数だけで動かすことができる。
+
+| 環境変数 | 対応フィールド | 説明 |
+|---|---|---|
+| `CLICKUP_API_KEY` | `apiKey` | config file の値より優先される |
+| `CLICKUP_TEAM_ID` | `teamId` | config file の値より優先される |
+| `CLICKUP_CONFIG` | 設定ファイルのパス | `--config` フラグより低優先 |
+
+> `CLICKUP_API_KEY` と `CLICKUP_TEAM_ID` が両方設定されていれば、config file がなくても動作する。
+
+---
+```
+
+---
+
+- [ ] **Step 2: 「グローバルオプション」セクションを「コマンドリファレンス」の直前に追加する**
+
+`## コマンドリファレンス` の直前に挿入する:
+
+```markdown
+## グローバルオプション
+
+すべてのサブコマンドで使用できる。
+
+| オプション | 説明 |
+|---|---|
+| `--config <path>` | config file のパスを指定する（デフォルト: `~/.clickup/config.json`）。`CLICKUP_CONFIG` 環境変数より優先される |
+
+---
+
+```
+
+---
+
+- [ ] **Step 3: 「GitHub Actions での使い方」セクションを「注意事項」の直前に追加する**
+
+`## 注意事項` の直前に挿入する:
+
+```markdown
+## GitHub Actions での使い方
+
+`CLICKUP_API_KEY` と `CLICKUP_TEAM_ID` を GitHub Secrets に登録し、ワークフロー内で環境変数として渡す。
+
+```yaml
+- name: Generate ClickUp time report
+  run: |
+    clickup time-report \
+      --start "2026-05-01T00:00:00+09:00" \
+      --end   "2026-05-08T00:00:00+09:00" \
+      --output report.json
+  env:
+    CLICKUP_API_KEY: ${{ secrets.CLICKUP_API_KEY }}
+    CLICKUP_TEAM_ID: ${{ secrets.CLICKUP_TEAM_ID }}
+```
+
+`lists` を使うコマンド（`get-tasks` など）を実行する場合は、設定ファイルをその場で作成して `--config` で渡す。
+
+```yaml
+- name: Fetch tasks
+  run: |
+    echo '{"lists":{"work":"LIST_ID_HERE"}}' > /tmp/clickup.json
+    clickup --config /tmp/clickup.json get-tasks --list work
+  env:
+    CLICKUP_API_KEY: ${{ secrets.CLICKUP_API_KEY }}
+    CLICKUP_TEAM_ID: ${{ secrets.CLICKUP_TEAM_ID }}
+```
+
+---
+
+```
+
+---
+
+- [ ] **Step 4: コミットする**
+
+```
+git add README.md
+git commit -m "docs: document env vars, --config flag, and GitHub Actions usage"
 ```
