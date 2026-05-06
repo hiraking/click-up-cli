@@ -64,14 +64,14 @@ func newCreateTaskCmd() *cobra.Command {
 				req.Priority = &p
 			}
 			if cmd.Flags().Changed("due-date") {
-				t, err := dateparse.ParseISO(dueDateStr, "due-date")
+				t, err := dateparse.ParseISO(dueDateStr, "due-date", cfg.TimezoneLocation())
 				if err != nil {
 					return err
 				}
 				req.DueDate = &t
 			}
 			if cmd.Flags().Changed("start-date") {
-				t, err := dateparse.ParseISO(startDateStr, "start-date")
+				t, err := dateparse.ParseISO(startDateStr, "start-date", cfg.TimezoneLocation())
 				if err != nil {
 					return err
 				}
@@ -104,8 +104,8 @@ func newCreateTaskCmd() *cobra.Command {
 	cmd.Flags().StringVar(&parentID, "parent", "", "Parent task ID. Creates a subtask.")
 	cmd.Flags().StringVar(&status, "status", "", "Status name (e.g. \"to do\", \"in progress\").")
 	cmd.Flags().StringVar(&priority, "priority", "", "Priority: urgent, high, normal, or low.")
-	cmd.Flags().StringVar(&dueDateStr, "due-date", "", "Due date as ISO 8601. Timezone-less values are treated as JST (+09:00).")
-	cmd.Flags().StringVar(&startDateStr, "start-date", "", "Start date as ISO 8601. Timezone-less values are treated as JST (+09:00).")
+	cmd.Flags().StringVar(&dueDateStr, "due-date", "", "Due date as ISO 8601. Timezone-less values use the timezone from config (default UTC).")
+	cmd.Flags().StringVar(&startDateStr, "start-date", "", "Start date as ISO 8601. Timezone-less values use the timezone from config (default UTC).")
 	cmd.Flags().IntVar(&timeEstimateMin, "time-estimate", 0, "Time estimate in minutes.")
 	cmd.Flags().StringVar(&taskTypeStr, "task-type", "", "Task type: milestone, project, or book.")
 

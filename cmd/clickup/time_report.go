@@ -28,11 +28,11 @@ func newTimeReportCmd() *cobra.Command {
 				return err
 			}
 
-			start, err := dateparse.ParseISO(flagStart, "start")
+			start, err := dateparse.ParseISO(flagStart, "start", cfg.TimezoneLocation())
 			if err != nil {
 				return err
 			}
-			end, err := dateparse.ParseISO(flagEnd, "end")
+			end, err := dateparse.ParseISO(flagEnd, "end", cfg.TimezoneLocation())
 			if err != nil {
 				return err
 			}

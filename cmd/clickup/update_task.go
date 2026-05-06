@@ -94,14 +94,14 @@ Clearing fields:
 				req.Priority = &p
 			}
 			if changed("due-date") {
-				t, err := dateparse.ParseISO(dueDateStr, "due-date")
+				t, err := dateparse.ParseISO(dueDateStr, "due-date", cfg.TimezoneLocation())
 				if err != nil {
 					return err
 				}
 				req.DueDate = &t
 			}
 			if changed("start-date") {
-				t, err := dateparse.ParseISO(startDateStr, "start-date")
+				t, err := dateparse.ParseISO(startDateStr, "start-date", cfg.TimezoneLocation())
 				if err != nil {
 					return err
 				}
@@ -131,8 +131,8 @@ Clearing fields:
 	cmd.Flags().StringVar(&description, "description", "", "New task description.")
 	cmd.Flags().StringVar(&status, "status", "", "New status name (e.g. \"to do\", \"in progress\").")
 	cmd.Flags().StringVar(&priority, "priority", "", "New priority: urgent, high, normal, or low.")
-	cmd.Flags().StringVar(&dueDateStr, "due-date", "", "New due date as ISO 8601. Timezone-less values are treated as JST (+09:00).")
-	cmd.Flags().StringVar(&startDateStr, "start-date", "", "New start date as ISO 8601. Timezone-less values are treated as JST (+09:00).")
+	cmd.Flags().StringVar(&dueDateStr, "due-date", "", "New due date as ISO 8601. Timezone-less values use the timezone from config (default UTC).")
+	cmd.Flags().StringVar(&startDateStr, "start-date", "", "New start date as ISO 8601. Timezone-less values use the timezone from config (default UTC).")
 	cmd.Flags().IntVar(&timeEstimateMin, "time-estimate", 0, "New time estimate in minutes.")
 	cmd.Flags().StringVar(&parentID, "parent", "", "New parent task ID.")
 	cmd.Flags().StringArrayVar(&clearFields, "clear", nil,

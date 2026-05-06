@@ -44,14 +44,14 @@ func newGetTasksCmd() *cobra.Command {
 
 			var dueDateGt, dueDateLt *time.Time
 			if dueAfterStr != "" {
-				t, err := dateparse.ParseISO(dueAfterStr, "due-after")
+				t, err := dateparse.ParseISO(dueAfterStr, "due-after", cfg.TimezoneLocation())
 				if err != nil {
 					return err
 				}
 				dueDateGt = &t
 			}
 			if dueBeforeStr != "" {
-				t, err := dateparse.ParseISO(dueBeforeStr, "due-before")
+				t, err := dateparse.ParseISO(dueBeforeStr, "due-before", cfg.TimezoneLocation())
 				if err != nil {
 					return err
 				}
