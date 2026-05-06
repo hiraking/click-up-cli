@@ -30,7 +30,7 @@ internal/models/          ← エージェント向け整形済み DTO
 internal/config/          ← 設定ローダー
   config.go               ← AppConfig、Load(path string)
 internal/dateparse/       ← ISO 8601 パーサ
-  parse.go                ← ParseISO(value, optionName string)
+  parse.go                ← ParseISO(value, optionName string, loc *time.Location)
   parse_test.go
 config.sample.json        ← 設定テンプレート（コミット対象）
 ~/.clickup/config.json    ← APIキー・設定（リポジトリ外）
