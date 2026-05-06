@@ -72,6 +72,7 @@ clickup get-tasks [options]
 | `--due-after <ISO8601>` | string | この日時より後の due_date を持つタスクに絞り込む |
 | `--due-before <ISO8601>` | string | この日時より前の due_date を持つタスクに絞り込む |
 | `--no-subtasks` | flag | サブタスクを取得しない（デフォルト: サブタスクあり） |
+| `--query <text>` | string | タスク名または説明に対する部分文字列フィルタ（大文字小文字を区別しない）。全ページ取得後にクライアントサイドでフィルタリングされる |
 
 **出力:** ルートタスクの JSON 配列。サブタスクは各タスクの `subtasks` フィールドにネスト。
 
@@ -97,6 +98,9 @@ clickup get-tasks --due-before 2026-04-21T23:59:59+09:00
 
 # サブタスクなしで取得
 clickup get-tasks --list work --no-subtasks
+
+# タスク名または説明に "設計" を含むタスクを取得
+clickup get-tasks --query 設計
 ```
 
 ---
