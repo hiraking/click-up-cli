@@ -27,7 +27,10 @@ func (c *AppConfig) TimezoneLocation() *time.Location {
 	if c.Timezone == "" {
 		return time.UTC
 	}
-	loc, _ := time.LoadLocation(c.Timezone)
+	loc, err := time.LoadLocation(c.Timezone)
+	if err != nil {
+		return time.UTC
+	}
 	return loc
 }
 
