@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -13,15 +14,28 @@ var ErrConfigNotFound = errors.New("config: file not found")
 
 // AppConfig はアプリケーション設定を表す。
 type AppConfig struct {
-	APIKey string            `mapstructure:"apiKey"`
-	TeamID string            `mapstructure:"teamId"`
-	Lists  map[string]string `mapstructure:"lists"`
+	APIKey   string            `mapstructure:"apiKey"`
+	TeamID   string            `mapstructure:"teamId"`
+	Lists    map[string]string `mapstructure:"lists"`
+	Timezone string            `mapstructure:"timezone"`
+}
+
+// TimezoneLocation は Timezone フィールドを *time.Location に変換して返す。
+// Timezone が空のときは time.UTC を返す。
+// Load() でバリデーション済みのため panic しない。
+func (c *AppConfig) TimezoneLocation() *time.Location {
+	if c.Timezone == "" {
+		return time.UTC
+	}
+	loc, _ := time.LoadLocation(c.Timezone)
+	return loc
 }
 
 // Load は設定を読み込む。path が空のときはファイルを読まず env var のみを使う。
 // path が指定された場合はファイルを必須とする。
 // CLICKUP_API_KEY / CLICKUP_TEAM_ID 環境変数はファイルの値を上書きする。
 // apiKey または teamId が空の場合はバリデーションエラーを返す。
+// timezone が空でない場合、有効な IANA タイムゾーン名かどうかを検証する。
 func Load(path string) (*AppConfig, error) {
 	v := viper.New()
 
@@ -57,6 +71,11 @@ func Load(path string) (*AppConfig, error) {
 	}
 	if cfg.TeamID == "" {
 		return nil, errors.New("config: teamId is required")
+	}
+	if cfg.Timezone != "" {
+		if _, err := time.LoadLocation(cfg.Timezone); err != nil {
+			return nil, fmt.Errorf("config: invalid timezone %q: %w", cfg.Timezone, err)
+		}
 	}
 
 	return &cfg, nil
