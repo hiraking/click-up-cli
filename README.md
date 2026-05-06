@@ -23,7 +23,8 @@ Create `~/.clickup/config.json` (copy `config.sample.json` and fill in your valu
   "lists": {
     "work":  "LIST_ID_1",
     "study": "LIST_ID_2"
-  }
+  },
+  "timezone": "UTC"
 }
 ```
 
@@ -32,6 +33,7 @@ Create `~/.clickup/config.json` (copy `config.sample.json` and fill in your valu
 | `apiKey` | Personal API Token (Settings → Apps → API Token) |
 | `teamId` | Workspace ID (found in the URL: `/w/{teamId}/`) |
 | `lists` | Name-to-ID mapping used by the `--list` flag |
+| `timezone` | IANA timezone name for offset-less datetime strings (e.g. `"Asia/Tokyo"`, `"UTC"`). Defaults to `"UTC"` if omitted. |
 
 ### 3. Override config
 
@@ -71,8 +73,8 @@ clickup get-tasks [options]
 |---|---|---|
 | `--list <name>` | string | List name from `config.json`. Repeatable. Defaults to all lists. |
 | `--status <name>` | string | Filter by status. Repeatable. |
-| `--due-after <ISO8601>` | string | Only tasks with a due date after this datetime |
-| `--due-before <ISO8601>` | string | Only tasks with a due date before this datetime |
+| `--due-after <ISO8601>` | string | Only tasks with a due date after this datetime. Timezone-less values use the `timezone` from config (default UTC). |
+| `--due-before <ISO8601>` | string | Only tasks with a due date before this datetime. Timezone-less values use the `timezone` from config (default UTC). |
 | `--no-subtasks` | flag | Exclude subtasks (default: included) |
 | `--query <text>` | string | Case-insensitive substring filter on task name and description (client-side, applied after all pages are fetched) |
 
@@ -101,7 +103,7 @@ clickup get-tasks [options]
 
 > - Automatically paginates up to 10 pages (1,000 tasks). If the limit is reached, a warning is printed to stderr and the fetched results are returned.
 > - `--due-after` / `--due-before` filtering is handled server-side by the ClickUp API.
-> - **Timezone:** Datetime strings without an offset (e.g. `"2026-05-01"`, `"2026-05-01T09:00"`) are interpreted as JST (+09:00). Explicit offsets (e.g. `"2026-05-01T00:00:00Z"`) are used as-is.
+> - **Timezone:** Datetime strings without an offset (e.g. `"2026-05-01"`, `"2026-05-01T09:00"`) are interpreted using the `timezone` setting from config (default: UTC). Explicit offsets (e.g. `"2026-05-01T00:00:00Z"`) are used as-is.
 
 ```bash
 clickup get-tasks

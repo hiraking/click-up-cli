@@ -3,5 +3,6 @@
   "teamId": "YOUR_TEAM_ID_HERE",
   "lists": {
     "my-list": "LIST_ID_HERE"
-  }
+  },
+  "timezone": "UTC"
 }
