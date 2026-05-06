@@ -53,3 +53,10 @@ func availableListNames(lists map[string]string) string {
 	sort.Strings(names)
 	return strings.Join(names, ", ")
 }
+
+func maskAPIKey(s string) string {
+	if len(s) <= 4 {
+		return "****"
+	}
+	return "****" + s[len(s)-4:]
+}
