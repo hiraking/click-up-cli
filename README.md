@@ -1,20 +1,20 @@
 # ClickUp CLI
 
-ClickUp REST API v2 の薄い CLI ラッパー。AI エージェントやスクリプトから ClickUp タスクを JSON で取得・作成するためのツール。
+A lightweight CLI wrapper for the ClickUp REST API v2, designed for use with AI agents and scripts. Fetches and creates tasks as structured JSON.
 
-## セットアップ
+## Setup
 
-### 1. インストール
+### 1. Install
 
 ```bash
 go install ./cmd/clickup
 ```
 
-`$GOPATH/bin`（通常 `~/go/bin`）に `clickup` バイナリが配置される。`$PATH` に含まれていればそのまま実行できる。
+The `clickup` binary is placed in `$GOPATH/bin` (typically `~/go/bin`).
 
-### 2. 設定ファイルの作成
+### 2. Create a config file
 
-`~/.clickup/config.json` を作成する（`config.sample.json` をコピーして編集）。
+Create `~/.clickup/config.json` (copy `config.sample.json` and fill in your values):
 
 ```json
 {
@@ -27,114 +27,122 @@ go install ./cmd/clickup
 }
 ```
 
-| フィールド | 説明 |
+| Field | Description |
 |---|---|
-| `apiKey` | ClickUp の Personal API Token（Settings → Apps → API Token） |
-| `teamId` | ワークスペース ID（URL の `/w/{teamId}/` から確認） |
-| `lists` | リスト名 → リスト ID のマッピング。`--list` オプションで名前を指定するために使う |
+| `apiKey` | Personal API Token (Settings → Apps → API Token) |
+| `teamId` | Workspace ID (found in the URL: `/w/{teamId}/`) |
+| `lists` | Name-to-ID mapping used by the `--list` flag |
 
-### 3. 設定値の上書き
+### 3. Override config
 
-環境変数または `--config` フラグで設定を上書きできる。
+Use environment variables or the `--config` flag to override the config file.
 
-**環境変数**
+**Environment variables**
 
-| 環境変数 | 対応フィールド | 説明 |
+| Variable | Field | Notes |
 |---|---|---|
-| `CLICKUP_API_KEY` | `apiKey` | config file の値より優先される |
-| `CLICKUP_TEAM_ID` | `teamId` | config file の値より優先される |
-| `CLICKUP_CONFIG` | 設定ファイルのパス | `--config` フラグより低優先 |
+| `CLICKUP_API_KEY` | `apiKey` | Takes precedence over the config file |
+| `CLICKUP_TEAM_ID` | `teamId` | Takes precedence over the config file |
+| `CLICKUP_CONFIG` | config file path | Lower priority than `--config` |
 
-> `CLICKUP_API_KEY` と `CLICKUP_TEAM_ID` が両方設定されていれば、config file がなくても動作する。
+> If both `CLICKUP_API_KEY` and `CLICKUP_TEAM_ID` are set, no config file is needed.
 
-**`--config` フラグ**
+**`--config` flag** (available on all subcommands)
 
 ```bash
 clickup --config /path/to/config.json get-tasks
 ```
 
-すべてのサブコマンドで使用できる。優先順位: `--config` フラグ > `CLICKUP_CONFIG` 環境変数 > `~/.clickup/config.json`
+Priority: `--config` flag > `CLICKUP_CONFIG` env var > `~/.clickup/config.json`
 
 ---
 
-## コマンドリファレンス
+## Commands
 
-### `get-tasks` — タスク一覧をツリー形式で取得
+### `get-tasks`
+
+Fetches tasks as a tree.
 
 ```
 clickup get-tasks [options]
 ```
 
-| オプション | 型 | 説明 |
+| Option | Type | Description |
 |---|---|---|
-| `--list <name>` | string | 取得するリスト名（`config.json` の `lists` キー）。複数指定可（`--list work --list study`）。省略時は全リスト |
-| `--status <name>` | string | フィルタするステータス名。複数指定可 |
-| `--due-after <ISO8601>` | string | この日時より後の due_date を持つタスクに絞り込む |
-| `--due-before <ISO8601>` | string | この日時より前の due_date を持つタスクに絞り込む |
-| `--no-subtasks` | flag | サブタスクを取得しない（デフォルト: サブタスクあり） |
-| `--query <text>` | string | タスク名または説明に対する部分文字列フィルタ（大文字小文字を区別しない）。全ページ取得後にクライアントサイドでフィルタリングされる |
+| `--list <name>` | string | List name from `config.json`. Repeatable. Defaults to all lists. |
+| `--status <name>` | string | Filter by status. Repeatable. |
+| `--due-after <ISO8601>` | string | Only tasks with a due date after this datetime |
+| `--due-before <ISO8601>` | string | Only tasks with a due date before this datetime |
+| `--no-subtasks` | flag | Exclude subtasks (default: included) |
+| `--query <text>` | string | Case-insensitive substring filter on task name and description (client-side, applied after all pages are fetched) |
 
-**出力:** ルートタスクの JSON 配列。サブタスクは各タスクの `subtasks` フィールドにネスト。
+**Output:** JSON array of root tasks. Subtasks are nested under each task's `subtasks` field.
 
-> **日付のタイムゾーンについて:** オフセットなしで渡した場合（例: `"2026-05-01"` や `"2026-05-01T09:00"`）は **JST (+09:00)** として扱われる。オフセットを明示した場合（例: `"2026-05-01T00:00:00Z"` や `"2026-05-01T09:00:00+09:00"`）はその値をそのまま使用する。
+```json
+[
+  {
+    "id": "86exa7yq5",
+    "name": "Write design doc",
+    "status": "in progress",
+    "priority": "high",
+    "parentId": null,
+    "subtasks": [
+      {
+        "id": "86exa8ab3",
+        "name": "Draft outline",
+        "status": "to do",
+        "parentId": "86exa7yq5",
+        "subtasks": []
+      }
+    ]
+  }
+]
+```
 
-#### 使用例
+> - Automatically paginates up to 10 pages (1,000 tasks). If the limit is reached, a warning is printed to stderr and the fetched results are returned.
+> - `--due-after` / `--due-before` filtering is handled server-side by the ClickUp API.
+> - **Timezone:** Datetime strings without an offset (e.g. `"2026-05-01"`, `"2026-05-01T09:00"`) are interpreted as JST (+09:00). Explicit offsets (e.g. `"2026-05-01T00:00:00Z"`) are used as-is.
 
 ```bash
-# 全リストのタスクを取得
 clickup get-tasks
-
-# work リストのタスクのみ
 clickup get-tasks --list work
-
-# work と study リストを指定
 clickup get-tasks --list work --list study
-
-# ステータスでフィルタ
 clickup get-tasks --list work --status active
-
-# 今日中に期限が来るタスク
 clickup get-tasks --due-before 2026-04-21T23:59:59+09:00
-
-# サブタスクなしで取得
 clickup get-tasks --list work --no-subtasks
-
-# タスク名または説明に "設計" を含むタスクを取得
-clickup get-tasks --query 設計
+clickup get-tasks --query "design"
 ```
 
 ---
 
-### `create-task` — タスクを新規作成
+### `create-task`
+
+Creates a new task.
 
 ```
 clickup create-task <name> --list <name> [options]
 ```
 
-| 引数/オプション | 型 | 説明 |
+| Argument/Option | Type | Description |
 |---|---|---|
-| `name` | string | タスク名（必須） |
-| `--list <name>` | string | 作成先リスト名（必須）。`config.json` の `lists` キー（例: `work`, `study`） |
-| `--description <text>` | string | タスクの説明 |
-| `--parent <taskId>` | string | 親タスク ID。指定するとサブタスクとして作成 |
-| `--status <name>` | string | ステータス名（例: `"to do"`, `"in progress"`） |
-| `--priority <value>` | string | 優先度: `urgent` / `high` / `normal` / `low` |
-| `--due-date <ISO8601>` | string | 期日 |
-| `--start-date <ISO8601>` | string | 開始日 |
-| `--time-estimate <分>` | int | 見積もり時間（分単位） |
-| `--task-type <name>` | string | タスクタイプ: `milestone` / `project` / `book` |
+| `name` | string | Task name (required) |
+| `--list <name>` | string | Destination list name (required) |
+| `--description <text>` | string | Task description |
+| `--parent <taskId>` | string | Parent task ID (creates a subtask) |
+| `--status <name>` | string | Status name (e.g. `"to do"`, `"in progress"`) |
+| `--priority <value>` | string | `urgent` / `high` / `normal` / `low` |
+| `--due-date <ISO8601>` | string | Due date |
+| `--start-date <ISO8601>` | string | Start date |
+| `--time-estimate <minutes>` | int | Time estimate in minutes |
+| `--task-type <name>` | string | `milestone` / `project` / `book` |
 
-**出力:** 作成されたタスクの JSON オブジェクト。
-
-#### 使用例
+**Output:** `TaskSummary` object of the created task (same shape as `get-task`).
 
 ```bash
-# 最小構成
-clickup create-task "新しいタスク" --list work
+clickup create-task "My task" --list work
 
-# オプション全指定
-clickup create-task "設計書を書く" --list work \
-  --description "アーキテクチャ設計書の作成" \
+clickup create-task "Write design doc" --list work \
+  --description "Architecture design" \
   --parent "86exa7yq5" \
   --status "to do" \
   --priority high \
@@ -142,124 +150,105 @@ clickup create-task "設計書を書く" --list work \
   --start-date "2026-04-25T09:00" \
   --time-estimate 120
 
-# タスクタイプを指定して作成
-clickup create-task "Q2 計画" --list work --task-type milestone
+clickup create-task "Q2 Plan" --list work --task-type milestone
 ```
 
 ---
 
-### `get-task` — 単一タスクを取得
+### `get-task`
+
+Fetches a single task by ID.
 
 ```
 clickup get-task <taskId>
 ```
 
-#### 使用例
-
 ```bash
 clickup get-task 86exa7yq5
 ```
 
+```json
+{
+  "id": "86exa7yq5",
+  "name": "English study",
+  "status": "active",
+  "priority": null,
+  "parentId": null,
+  "url": "https://app.clickup.com/t/86exa7yq5",
+  "dueDate": null,
+  "description": "",
+  "listId": "900523741862",
+  "listName": "Study",
+  "createdAt": "2026-04-19T15:09:41.393Z",
+  "updatedAt": "2026-04-19T16:05:33.346Z",
+  "subtasks": []
+}
+```
+
 ---
 
-### `update-task` — タスクを更新
+### `update-task`
+
+Updates a task. Only specified fields are changed.
 
 ```
 clickup update-task <taskId> [options]
 ```
 
-| 引数/オプション | 型 | 説明 |
+| Option | Type | Description |
 |---|---|---|
-| `taskId` | string | 更新対象のタスク ID（必須） |
-| `--name <text>` | string | 新しいタスク名 |
-| `--description <text>` | string | 新しい説明 |
-| `--status <name>` | string | 新しいステータス名（例: `"to do"`, `"in progress"`） |
-| `--priority <value>` | string | 新しい優先度: `urgent` / `high` / `normal` / `low` |
-| `--due-date <ISO8601>` | string | 新しい期日 |
-| `--start-date <ISO8601>` | string | 新しい開始日 |
-| `--time-estimate <分>` | int | 新しい見積もり時間（分単位） |
-| `--parent <taskId>` | string | 新しい親タスク ID |
-| `--clear <field>` | string | フィールドをクリアする（繰り返し可） |
+| `--name <text>` | string | New task name |
+| `--description <text>` | string | New description |
+| `--status <name>` | string | New status |
+| `--priority <value>` | string | `urgent` / `high` / `normal` / `low` |
+| `--due-date <ISO8601>` | string | New due date |
+| `--start-date <ISO8601>` | string | New start date |
+| `--time-estimate <minutes>` | int | New time estimate in minutes |
+| `--parent <taskId>` | string | New parent task ID |
+| `--clear <field>` | string | Clear a field (repeatable). Clearable fields: `description`, `status`, `priority`, `due-date`, `start-date`, `time-estimate` |
 
-指定したオプションのフィールドのみ更新される。未指定のフィールドは変更されない。
+> `name` and `parent` cannot be cleared (`name` is required by the API; removing a subtask's parent is not supported).
 
-**出力:** 更新後のタスクの JSON オブジェクト。
-
-#### `--clear` でクリアできるフィールド
-
-| フィールド名 | 説明 |
-|---|---|
-| `description` | 説明をクリア |
-| `status` | ステータスをクリア |
-| `priority` | 優先度をクリア |
-| `due-date` | 期日をクリア |
-| `start-date` | 開始日をクリア |
-| `time-estimate` | 見積もり時間をクリア |
-
-> `name` はクリア不可（ClickUp API の必須フィールド）。  
-> `parent` はクリア不可（ClickUp API がサブタスクの親削除を非サポート）。
-
-#### 使用例
+**Output:** `TaskSummary` object of the updated task (same shape as `get-task`).
 
 ```bash
-# タスク名を変更する
-clickup update-task 86exa7yq5 --name "新しいタスク名"
-
-# ステータスと優先度を同時に変更する
+clickup update-task 86exa7yq5 --name "New name"
 clickup update-task 86exa7yq5 --status "in progress" --priority high
-
-# 期日をクリアする
 clickup update-task 86exa7yq5 --clear due-date
-
-# 名前を変更しつつ説明をクリアする
-clickup update-task 86exa7yq5 --name "新しい名前" --clear description
-
-# 複数フィールドをクリアする
+clickup update-task 86exa7yq5 --name "New name" --clear description
 clickup update-task 86exa7yq5 --clear due-date --clear priority
 ```
 
 ---
 
-### `time-report` — 時間集計レポートを生成
+### `time-report`
+
+Aggregates time entries for a period and outputs a JSON report grouped by List → Task → Breakdown.
 
 ```
 clickup time-report --start <ISO8601> --end <ISO8601> [options]
 ```
 
-指定期間の time entries を集計し、List → Top-level task → Breakdown のツリー構造で JSON レポートを出力する。
-
-| オプション | 型 | 説明 |
+| Option | Type | Description |
 |---|---|---|
-| `--start <ISO8601>` | string | 集計開始日時（必須、半開区間の左端・含む） |
-| `--end <ISO8601>` | string | 集計終了日時（必須、半開区間の右端・含まない） |
-| `--output`, `-o <path>` | string | 出力ファイルパス。省略時は stdout |
-| `--rows` | bool | normalized rows を含めるかどうか（後述のデフォルト参照） |
-
-**`--rows` のデフォルト挙動:**
-
-- `--output` あり かつ `--rows` 未指定 → rows **含める**
-- `--output` なし かつ `--rows` 未指定 → rows **含めない**
-- `--rows` / `--rows=false` 明示指定 → その値で上書き
-
-**出力:** camelCase JSON。`hierarchy` フィールドに `List → Task → Breakdown` のツリー構造。
-
-> **日付のタイムゾーンについて:** オフセットなしで渡した場合は **JST (+09:00)** として扱われる。
-
-#### 使用例
+| `--start <ISO8601>` | string | Start of the period (required, inclusive) |
+| `--end <ISO8601>` | string | End of the period (required, exclusive) |
+| `--output`, `-o <path>` | string | Output file path. Defaults to stdout. |
+| `--rows` | bool | Include normalized rows. Defaults to `true` when `--output` is set, `false` otherwise. |
 
 ```bash
-# 週次レポートを stdout に出力（rows なし）
+# Weekly report to stdout (no rows)
 clickup time-report \
   --start "2026-04-27T00:00:00+09:00" \
   --end   "2026-05-04T00:00:00+09:00"
 
-# ファイルに保存（rows も含める）
+# Save to file (rows included by default)
 clickup time-report \
   --start "2026-04-27T00:00:00+09:00" \
   --end   "2026-05-04T00:00:00+09:00" \
   --output report.json
 
-# rows を明示的に除外してファイル出力
+# Save to file, explicitly exclude rows
 clickup time-report \
   --start "2026-04-27T00:00:00+09:00" \
   --end   "2026-05-04T00:00:00+09:00" \
@@ -269,82 +258,37 @@ clickup time-report \
 
 ---
 
-### `show-config` — 現在の設定を表示
+### `show-config`
+
+Prints the resolved configuration as JSON. The API key is masked, showing only the last 4 characters.
 
 ```
 clickup show-config
+clickup --config /path/to/other-config.json show-config
 ```
-
-設定ファイルと環境変数から読み込んだ現在の設定を JSON で出力する。API キーは末尾 4 文字のみ表示され、残りはマスクされる。
-
-**出力例:**
 
 ```json
 {
   "apiKey": "****a1b2",
-  "teamId": "90182595459",
+  "teamId": "90371842016",
   "lists": {
-    "work": "901817486451",
-    "study": "901817486452"
+    "work": "900523741862",
+    "study": "900523741899"
   }
 }
 ```
 
-> `lists` が未設定の場合は `{}` が出力される。
-
-#### 使用例
-
-```bash
-# 現在の設定を確認
-clickup show-config
-
-# 別の設定ファイルで確認
-clickup --config /path/to/other-config.json show-config
-```
-
 ---
 
-## 出力フォーマット
+## Error handling
 
-`TaskSummary` の camelCase JSON。
+Errors are written to stderr and exit with code 1.
 
-```json
-{
-  "id": "86exa7yq5",
-  "name": "英語学習",
-  "status": "active",
-  "priority": null,
-  "parentId": null,
-  "url": "https://app.clickup.com/t/86exa7yq5",
-  "dueDate": null,
-  "description": "",
-  "listId": "901817486451",
-  "listName": "学習",
-  "createdAt": "2026-04-19T15:09:41.393Z",
-  "updatedAt": "2026-04-19T16:05:33.346Z",
-  "subtasks": []
-}
-```
-
----
-
-## エラーハンドリング
-
-エラーは stderr に出力され、exit code 1 で終了する。
-
-| ケース | メッセージ例 |
+| Case | Example message |
 |---|---|
-| `--config` / `CLICKUP_CONFIG` で指定したファイルが存在しない | `config file not found: ...` |
-| 不明なリスト名 | `Error: Unknown list name 'foo'. Available: work, study` |
-| 日付フォーマット不正 | `Error: '--due-after' value '...' is not a valid ISO 8601 datetime.` |
-| 不正な優先度 | `Error: Invalid priority 'foo'. Use urgent, high, normal, or low.` |
-| API エラー | `HTTP Error (404): ...` |
-| レート制限（429） | `warning: rate limited, retrying in 60s (attempt 1/3)...` を stderr に出力してリトライ。3 回失敗で `HTTP Error (429): rate limit exceeded after 3 retries` |
-
----
-
-## 注意事項
-
-- タスク取得は最大 10 ページ（最大 1,000 件）まで自動ページネーション。1,000 件を超える場合は警告を stderr に出力し、取得済み分を返す
-- `--due-after` / `--due-before` フィルタは ClickUp API 側で処理される
-- `--list` は複数回指定可能（`--list work --list study`）
+| Config file not found | `config file not found: ...` |
+| Unknown list name | `Error: Unknown list name 'foo'. Available: work, study` |
+| Invalid date format | `Error: '--due-after' value '...' is not a valid ISO 8601 datetime.` |
+| Invalid priority | `Error: Invalid priority 'foo'. Use urgent, high, normal, or low.` |
+| API error | `HTTP Error (404): ...` |
+| Rate limited (429) | Retries up to 3 times with a warning printed to stderr. Fails with `HTTP Error (429): rate limit exceeded after 3 retries`. |
