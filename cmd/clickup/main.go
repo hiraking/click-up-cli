@@ -25,6 +25,7 @@ func main() {
 	rootCmd.AddCommand(newCreateTaskCmd())
 	rootCmd.AddCommand(newUpdateTaskCmd())
 	rootCmd.AddCommand(newTimeReportCmd())
+	rootCmd.AddCommand(newShowConfigCmd())
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
