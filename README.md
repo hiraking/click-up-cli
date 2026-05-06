@@ -269,6 +269,41 @@ clickup time-report \
 
 ---
 
+### `show-config` — 現在の設定を表示
+
+```
+clickup show-config
+```
+
+設定ファイルと環境変数から読み込んだ現在の設定を JSON で出力する。API キーは末尾 4 文字のみ表示され、残りはマスクされる。
+
+**出力例:**
+
+```json
+{
+  "apiKey": "****a1b2",
+  "teamId": "90182595459",
+  "lists": {
+    "work": "901817486451",
+    "study": "901817486452"
+  }
+}
+```
+
+> `lists` が未設定の場合は `{}` が出力される。
+
+#### 使用例
+
+```bash
+# 現在の設定を確認
+clickup show-config
+
+# 別の設定ファイルで確認
+clickup --config /path/to/other-config.json show-config
+```
+
+---
+
 ## 出力フォーマット
 
 `TaskSummary` の camelCase JSON。
