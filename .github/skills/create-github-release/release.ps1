@@ -35,7 +35,7 @@ foreach ($t in $targets) {
     Write-Host "==> Building $($t.Out)"
     $env:GOOS   = $t.OS
     $env:GOARCH = $t.Arch
-    go build -o $t.Out $pkg
+    go build -trimpath -ldflags "-s -w -X main.version=$Version" -o $t.Out $pkg
 }
 
 Remove-Item Env:GOOS, Env:GOARCH -ErrorAction SilentlyContinue
