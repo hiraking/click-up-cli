@@ -9,11 +9,13 @@ import (
 )
 
 var configPath string
+var version = "dev"
 
 func main() {
 	rootCmd := &cobra.Command{
 		Use:           "clickup",
 		Short:         "ClickUp API CLI wrapper",
+		Version:       version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
