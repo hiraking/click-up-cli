@@ -14,6 +14,10 @@ func newShowConfigCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			lists := cfg.Lists
+			if lists == nil {
+				lists = map[string]string{}
+			}
 			out := struct {
 				APIKey string            `json:"apiKey"`
 				TeamID string            `json:"teamId"`
@@ -21,7 +25,7 @@ func newShowConfigCmd() *cobra.Command {
 			}{
 				APIKey: maskAPIKey(cfg.APIKey),
 				TeamID: cfg.TeamID,
-				Lists:  cfg.Lists,
+				Lists:  lists,
 			}
 			return printJSON(out)
 		},

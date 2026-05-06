@@ -1,4 +1,4 @@
-// cmd/clickup/show_config_test.go
+// cmd/clickup/helpers_test.go
 package main
 
 import (
