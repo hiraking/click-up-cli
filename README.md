@@ -2,6 +2,12 @@
 
 A lightweight CLI wrapper for the ClickUp REST API v2, designed for use with AI agents and scripts. Fetches and creates tasks as structured JSON.
 
+## Notes
+
+- **Personal use only.** This tool was built for my own use and only implements the features I personally need. It is not a full-featured ClickUp client.
+- **Personal Workspace assumed.** The tool is designed for ClickUp used with [Personal Workspace Layout](https://help.clickup.com/hc/en-us/articles/13857123113623-Personal-Workspace-Layout) enabled. Features that are not relevant to solo use (e.g., assignees) are intentionally omitted.
+- **JSON-only output.** All commands output JSON. This is intentional — the primary use case is consumption by AI agents and scripts, not human-readable display.
+
 ## Setup
 
 ### 1. Install
