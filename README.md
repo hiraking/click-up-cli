@@ -276,9 +276,12 @@ clickup --config /path/to/other-config.json show-config
   "lists": {
     "work": "900523741862",
     "study": "900523741899"
-  }
+  },
+  "timezone": "Asia/Tokyo"
 }
 ```
+
+> `timezone` is omitted from the output if not set in config.
 
 ---
 
