@@ -28,7 +28,6 @@ config.sample.json        ← 設定テンプレート（コミット対象）
 - **依存最小化**: `internal/` パッケージは標準ライブラリのみ使用。CLI 側は cobra / viper を使用
 - **レイヤー分離**: Raw API 型は `internal/client/` 内に閉じ、外部には整形済み DTO のみ公開する
 - **エラーハンドリング**: エラーは上位にそのまま伝播。過剰ラップしない
-- **ページネーション**: 最大 10 ページ（1,000 件）を自動取得。上限到達時は stderr に警告を出す
 
 ## アーキテクチャ概要
 
@@ -57,12 +56,13 @@ ClickUpClient (internal/client/)
 
 ## ClickUp API の注意点
 
-- `date_created`, `due_date`, `start_date` 等は Unix ミリ秒の文字列（例: `"1567780450202"`）
-- `time_estimate` は ms の整数文字列（例: `"8640000"`）
-- `status.status` が表示名（例: `"in progress"`）、`priority.priority` が表示名（例: `"normal"`）
+API の仕様詳細は `references/clickup-api-v2-reference.json` を参照。
+
+フィールド型など実装上の注意:
+
+- 日時フィールド（`date_created`, `due_date`, `start_date` 等）は Unix ミリ秒の文字列（例: `"1567780450202"`）
+- `status.status` / `priority.priority` は表示名の文字列（例: `"in progress"`, `"normal"`）
 - `parent` が `null` = ルートタスク / 文字列 = 親タスクの ID
-- GET /v2/team/{teamId}/task に `subtasks=true` を付けると全サブタスクもフラットに返る
-- `due_date_gt` / `due_date_lt` フィルタは API 側で処理。親がフィルタ外でもサブタスクがマッチすると、そのサブタスクはルートとして返る
 
 ## 変更時のルール
 
