@@ -30,7 +30,10 @@ Create `~/.clickup/config.json` (copy `config.sample.json` and fill in your valu
     "work":  "LIST_ID_1",
     "study": "LIST_ID_2"
   },
-  "timezone": "UTC"
+  "timezone": "UTC",
+  "taskTypes": {
+    "milestone": 1
+  }
 }
 ```
 
