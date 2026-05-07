@@ -264,6 +264,63 @@ clickup time-report \
   --rows=false
 ```
 
+**Output** (without `--rows`):
+
+```json
+{
+  "generatedAt": "2026-05-07T10:00:00Z",
+  "period": {
+    "start": "2026-04-27T00:00:00+09:00",
+    "end": "2026-05-04T00:00:00+09:00",
+    "timezone": "Asia/Tokyo"
+  },
+  "summary": {
+    "totalDurationMin": 370,
+    "listCount": 2,
+    "topLevelTaskCount": 3,
+    "breakdownTaskCount": 2
+  },
+  "hierarchy": [
+    {
+      "listId": "900523741862",
+      "listName": "Work",
+      "durationMin": 270,
+      "tasks": [
+        {
+          "taskId": "86exa7yq5",
+          "taskName": "Write design doc",
+          "durationMin": 150,
+          "breakdown": [
+            { "taskId": "86exa7yq5", "taskName": "Write design doc", "durationMin": 90 },
+            { "taskId": "86exa8ab3", "taskName": "Draft outline", "durationMin": 60 }
+          ]
+        },
+        {
+          "taskId": "86exb1cd2",
+          "taskName": "Code review",
+          "durationMin": 120
+        }
+      ]
+    },
+    {
+      "listId": "900523741899",
+      "listName": "Study",
+      "durationMin": 100,
+      "tasks": [
+        {
+          "taskId": "86exc3ef4",
+          "taskName": "English study",
+          "durationMin": 100
+        }
+      ]
+    }
+  ]
+}
+```
+
+> - `breakdown` is omitted when all time was recorded directly on the top-level task (no subtask entries).
+> - `rows` field is included only when `--rows` is enabled. Each row represents one clipped time entry with `originalStart/End` and `clippedStart/End`.
+
 ---
 
 ### `show-config`
