@@ -33,20 +33,24 @@ $prevTag = git tag --sort=-version:refname | Select-Object -First 1
 git log "$prevTag..HEAD" --oneline
 ```
 
-コミットメッセージをもとに以下の形式でリリースノートの草案を作成し、ユーザーに確認を求める。
+コミットメッセージをもとに以下のテンプレートに沿ってリリースノートの草案を**英語で**作成し、ユーザーに確認を求める。
 
 ```
-## 変更内容
+## What's Changed
 
-### 新機能
+### New Features
 - ...
 
-### バグ修正
+### Bug Fixes
 - ...
 
-### その他
+### Other Changes
 - ...
 ```
+
+- リリースノートは**必ず英語**で記述する
+- 該当するセクションのみ含め、変更のないセクションは省略する
+- 各項目は簡潔な一文で記述する（コミットメッセージをそのまま使わず意味が伝わる表現にする）
 
 ユーザーが承認したらStep 3へ進む。
 
@@ -60,9 +64,9 @@ git log "$prevTag..HEAD" --oneline
   -Version "v0.2.0" `
   -Title "v0.2.0 - ..." `
   -Notes @"
-## 変更内容
+## What's Changed
 
-### 新機能
+### New Features
 - ...
 "@
 ```
