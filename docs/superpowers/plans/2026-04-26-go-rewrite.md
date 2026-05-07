@@ -1868,7 +1868,7 @@ clickup create-task "新しいタスク" --list work
 # オプション全指定
 clickup create-task "設計書を書く" --list work \
   --description "アーキテクチャ設計書の作成" \
-  --parent "86exa7yq5" \
+  --parent "abc123xyz" \
   --status "to do" \
   --priority high \
   --due-date "2026-05-01T18:00+09:00" \
@@ -1887,7 +1887,7 @@ clickup get-task <taskId>
 #### 使用例
 
 ```bash
-clickup get-task 86exa7yq5
+clickup get-task abc123xyz
 ```
 
 ---
@@ -1898,16 +1898,16 @@ clickup get-task 86exa7yq5
 
 ```json
 {
-  "id": "86exa7yq5",
-  "name": "英語学習",
+  "id": "abc123xyz",
+  "name": "タスク名",
   "status": "active",
   "priority": null,
   "parentId": null,
-  "url": "https://app.clickup.com/t/86exa7yq5",
+  "url": "https://app.clickup.com/t/abc123xyz",
   "dueDate": null,
   "description": "",
-  "listId": "901817486451",
-  "listName": "学習",
+  "listId": "123456789012",
+  "listName": "リスト名",
   "createdAt": "2026-04-19T15:09:41.393Z",
   "updatedAt": "2026-04-19T16:05:33.346Z",
   "subtasks": []
