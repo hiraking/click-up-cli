@@ -98,3 +98,33 @@ func TestTimezoneLocation_ValidZone(t *testing.T) {
 	require.NotNil(t, loc)
 	assert.Equal(t, "Asia/Tokyo", loc.String())
 }
+
+func TestLoad_TaskTypes(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.json")
+	require.NoError(t, os.WriteFile(path, []byte(`{
+		"apiKey": "pk_key",
+		"teamId": "team",
+		"taskTypes": { "milestone": 1, "project": 1001 }
+	}`), 0600))
+
+	t.Setenv("CLICKUP_API_KEY", "")
+	t.Setenv("CLICKUP_TEAM_ID", "")
+
+	cfg, err := config.Load(path)
+	require.NoError(t, err)
+	assert.Equal(t, map[string]int{"milestone": 1, "project": 1001}, cfg.TaskTypes)
+}
+
+func TestLoad_TaskTypes_Absent(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.json")
+	require.NoError(t, os.WriteFile(path, []byte(`{"apiKey":"pk_key","teamId":"team"}`), 0600))
+
+	t.Setenv("CLICKUP_API_KEY", "")
+	t.Setenv("CLICKUP_TEAM_ID", "")
+
+	cfg, err := config.Load(path)
+	require.NoError(t, err)
+	assert.Empty(t, cfg.TaskTypes)
+}

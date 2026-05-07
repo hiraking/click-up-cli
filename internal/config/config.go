@@ -14,10 +14,11 @@ var ErrConfigNotFound = errors.New("config: file not found")
 
 // AppConfig はアプリケーション設定を表す。
 type AppConfig struct {
-	APIKey   string            `mapstructure:"apiKey"`
-	TeamID   string            `mapstructure:"teamId"`
-	Lists    map[string]string `mapstructure:"lists"`
-	Timezone string            `mapstructure:"timezone"`
+	APIKey    string            `mapstructure:"apiKey"`
+	TeamID    string            `mapstructure:"teamId"`
+	Lists     map[string]string `mapstructure:"lists"`
+	Timezone  string            `mapstructure:"timezone"`
+	TaskTypes map[string]int    `mapstructure:"taskTypes"`
 }
 
 // TimezoneLocation は Timezone フィールドを *time.Location に変換して返す。
