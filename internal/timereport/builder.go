@@ -256,8 +256,7 @@ func Build(
 	}
 
 	return models.TimeReport{
-		SchemaVersion: 1,
-		GeneratedAt:   time.Now(),
+		GeneratedAt: time.Now(),
 		Period: models.TimePeriod{
 			Start:    start,
 			End:      end,

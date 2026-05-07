@@ -20,8 +20,7 @@ type TimeEntry struct {
 
 // TimeReport は time-report コマンドの出力 DTO。
 type TimeReport struct {
-	SchemaVersion int               `json:"schemaVersion"`
-	GeneratedAt   time.Time         `json:"generatedAt"`
+	GeneratedAt time.Time         `json:"generatedAt"`
 	Period        TimePeriod        `json:"period"`
 	Summary       TimeReportSummary `json:"summary"`
 	Hierarchy     []TimeReportList  `json:"hierarchy"`

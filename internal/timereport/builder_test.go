@@ -63,7 +63,6 @@ func mapFetch(tasks map[string]models.TaskSummary) timereport.TaskFetcher {
 func TestBuild_EmptyEntries(t *testing.T) {
 	report, err := timereport.Build(context.Background(), nil, reportStart, reportEnd, noFetch)
 	require.NoError(t, err)
-	assert.Equal(t, 1, report.SchemaVersion)
 	assert.Empty(t, report.Hierarchy)
 	assert.Equal(t, int64(0), report.Summary.TotalDurationMin)
 	assert.Equal(t, 0, report.Summary.ListCount)
@@ -321,11 +320,10 @@ func TestBuild_Rows_ContainClippedData(t *testing.T) {
 	assert.Equal(t, entry.End, row.ClippedEnd)
 }
 
-func TestBuild_PeriodAndSchemaVersion(t *testing.T) {
+func TestBuild_Period(t *testing.T) {
 	report, err := timereport.Build(context.Background(), nil, reportStart, reportEnd, noFetch)
 	require.NoError(t, err)
 
-	assert.Equal(t, 1, report.SchemaVersion)
 	assert.Equal(t, reportStart, report.Period.Start)
 	assert.Equal(t, reportEnd, report.Period.End)
 	assert.Equal(t, "JST", report.Period.Timezone)
