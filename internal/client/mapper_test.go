@@ -263,16 +263,16 @@ func TestMapToRawUpdateBody_NoFields(t *testing.T) {
 }
 
 func TestMapToRawCreateBody_CustomItemID(t *testing.T) {
-	tt := models.TaskTypeMilestone
+	id := 1
 	req := models.CreateTaskRequest{
 		Name:         "Milestone Task",
-		CustomItemID: &tt,
+		CustomItemID: &id,
 	}
 
 	body := mapToRawCreateBody(req)
 
 	require.NotNil(t, body.CustomItemID)
-	assert.Equal(t, int(models.TaskTypeMilestone), *body.CustomItemID)
+	assert.Equal(t, 1, *body.CustomItemID)
 }
 
 func TestMapToRawCreateBody_CustomItemID_Nil(t *testing.T) {

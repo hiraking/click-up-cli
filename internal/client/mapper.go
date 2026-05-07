@@ -63,8 +63,7 @@ func mapToRawCreateBody(req models.CreateTaskRequest) rawCreateTaskBody {
 	}
 
 	if req.CustomItemID != nil {
-		id := int(*req.CustomItemID)
-		body.CustomItemID = &id
+		body.CustomItemID = req.CustomItemID
 	}
 
 	return body
