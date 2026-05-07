@@ -4,5 +4,8 @@
   "lists": {
     "my-list": "LIST_ID_HERE"
   },
-  "timezone": "UTC"
+  "timezone": "UTC",
+  "taskTypes": {
+    "milestone": 1
+  }
 }

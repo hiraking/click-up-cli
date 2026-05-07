@@ -40,6 +40,7 @@ Create `~/.clickup/config.json` (copy `config.sample.json` and fill in your valu
 | `teamId` | Workspace ID (found in the URL: `/w/{teamId}/`) |
 | `lists` | Name-to-ID mapping used by the `--list` flag |
 | `timezone` | IANA timezone name for offset-less datetime strings (e.g. `"Asia/Tokyo"`, `"UTC"`). Defaults to `"UTC"` if omitted. |
+| `taskTypes` | Optional. Name-to-`custom_item_id` mapping used by `--task-type`. Keys are case-sensitive. To find your workspace's IDs, use the [Get Custom Task Types](https://clickup.com/api/clickupreference/operation/GetCustomItems/) endpoint. |
 
 ### 3. Override config
 
@@ -142,7 +143,7 @@ clickup create-task <name> --list <name> [options]
 | `--due-date <ISO8601>` | string | Due date |
 | `--start-date <ISO8601>` | string | Start date |
 | `--time-estimate <minutes>` | int | Time estimate in minutes |
-| `--task-type <name>` | string | `milestone` / `project` / `book` |
+| `--task-type <name>` | string | Task type name as defined in `taskTypes` config (case-sensitive). |
 
 **Output:** `TaskSummary` object of the created task (same shape as `get-task`).
 
@@ -358,5 +359,7 @@ Errors are written to stderr and exit with code 1.
 | Unknown list name | `Error: Unknown list name 'foo'. Available: work, study` |
 | Invalid date format | `Error: '--due-after' value '...' is not a valid ISO 8601 datetime.` |
 | Invalid priority | `Error: Invalid priority 'foo'. Use urgent, high, normal, or low.` |
+| `taskTypes` not configured | `Error: No task types configured. Add a "taskTypes" mapping to config.json.` |
+| Unknown task type | `Error: Unknown task type 'foo'. Available: milestone, project` |
 | API error | `HTTP Error (404): ...` |
 | Rate limited (429) | Retries up to 3 times with a warning printed to stderr. Fails with `HTTP Error (429): rate limit exceeded after 3 retries`. |
