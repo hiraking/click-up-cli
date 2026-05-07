@@ -13,7 +13,7 @@ A lightweight CLI wrapper for the ClickUp REST API v2, designed for use with AI 
 ### 1. Install
 
 ```bash
-go install ./cmd/clickup
+go install github.com/hiraking/click-up-cli/cmd/clickup@latest
 ```
 
 The `clickup` binary is placed in `$GOPATH/bin` (typically `~/go/bin`).
