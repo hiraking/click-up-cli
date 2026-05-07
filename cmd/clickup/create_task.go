@@ -81,13 +81,7 @@ func newCreateTaskCmd() *cobra.Command {
 				d := time.Duration(timeEstimateMin) * time.Minute
 				req.TimeEstimate = &d
 			}
-			if cmd.Flags().Changed("task-type") {
-				tt, err := parseTaskType(taskTypeStr)
-				if err != nil {
-					return err
-				}
-				req.CustomItemID = &tt
-			}
+			// --task-type handler replaced in Task 3 (config-based lookup)
 
 			c := client.New(cfg.APIKey)
 			task, err := c.CreateTask(context.Background(), listID, req)
@@ -127,15 +121,4 @@ func parsePriority(s string) (models.TaskPriority, error) {
 	}
 }
 
-func parseTaskType(s string) (models.TaskType, error) {
-	switch strings.ToLower(s) {
-	case "milestone":
-		return models.TaskTypeMilestone, nil
-	case "project":
-		return models.TaskTypeProject, nil
-	case "book":
-		return models.TaskTypeBook, nil
-	default:
-		return 0, fmt.Errorf("Error: Invalid task type '%s'. Use milestone, project, or book.", s)
-	}
-}
+
