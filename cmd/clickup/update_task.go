@@ -32,6 +32,8 @@ func newUpdateTaskCmd() *cobra.Command {
 	var timeEstimateMin int
 	var parentID string
 	var clearFields []string
+	var archive bool
+	var unarchive bool
 
 	cmd := &cobra.Command{
 		Use:   "update-task <taskId>",
@@ -64,8 +66,13 @@ Clearing fields:
 			changed := cmd.Flags().Changed
 			if !changed("name") && !changed("description") && !changed("status") &&
 				!changed("priority") && !changed("due-date") && !changed("start-date") &&
-				!changed("time-estimate") && !changed("parent") && len(clearFields) == 0 {
+				!changed("time-estimate") && !changed("parent") && !changed("archive") &&
+				!changed("unarchive") && len(clearFields) == 0 {
 				return fmt.Errorf("Error: no fields specified to update.")
+			}
+
+			if changed("archive") && changed("unarchive") {
+				return fmt.Errorf("Error: --archive and --unarchive cannot be used together.")
 			}
 
 			cfg, err := loadConfig()
@@ -117,6 +124,14 @@ Clearing fields:
 				}
 				req.Parent = &parentID
 			}
+			if changed("archive") {
+				v := true
+				req.Archived = &v
+			}
+			if changed("unarchive") {
+				v := false
+				req.Archived = &v
+			}
 
 			c := client.New(cfg.APIKey)
 			task, err := c.UpdateTask(context.Background(), taskID, req)
@@ -138,6 +153,8 @@ Clearing fields:
 	cmd.Flags().StringArrayVar(&clearFields, "clear", nil,
 		"Field to clear (repeatable). Accepted: description, status, priority, due-date, start-date, time-estimate.\n"+
 			"Use --clear FIELD to remove a field's value from the task.")
+	cmd.Flags().BoolVar(&archive, "archive", false, "Archive the task.")
+	cmd.Flags().BoolVar(&unarchive, "unarchive", false, "Unarchive the task.")
 
 	return cmd
 }
