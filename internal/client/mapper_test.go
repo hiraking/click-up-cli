@@ -391,3 +391,30 @@ func TestToTimeEntry_ZeroEnd(t *testing.T) {
 	assert.Equal(t, "entry5", entry.ID)
 	assert.Equal(t, time.UnixMilli(0).UTC(), entry.End)
 }
+
+func TestMapToRawUpdateBody_Archive(t *testing.T) {
+	archived := true
+	req := models.UpdateTaskRequest{Archived: &archived}
+
+	body := mapToRawUpdateBody(req)
+
+	assert.Equal(t, true, body["archived"])
+}
+
+func TestMapToRawUpdateBody_Unarchive(t *testing.T) {
+	archived := false
+	req := models.UpdateTaskRequest{Archived: &archived}
+
+	body := mapToRawUpdateBody(req)
+
+	assert.Equal(t, false, body["archived"])
+}
+
+func TestMapToRawUpdateBody_ArchivedNil_NotInBody(t *testing.T) {
+	req := models.UpdateTaskRequest{}
+
+	body := mapToRawUpdateBody(req)
+
+	_, ok := body["archived"]
+	assert.False(t, ok)
+}

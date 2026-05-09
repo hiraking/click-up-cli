@@ -37,5 +37,6 @@ type UpdateTaskRequest struct {
 	StartDate    *time.Time
 	TimeEstimate *time.Duration
 	Parent       *string
+	Archived     *bool
 	ClearFields  []string
 }

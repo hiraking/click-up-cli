@@ -135,6 +135,9 @@ func mapToRawUpdateBody(req models.UpdateTaskRequest) map[string]interface{} {
 	if req.Parent != nil {
 		body["parent"] = *req.Parent
 	}
+	if req.Archived != nil {
+		body["archived"] = *req.Archived
+	}
 
 	for _, field := range req.ClearFields {
 		switch field {
