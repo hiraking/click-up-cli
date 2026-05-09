@@ -6,6 +6,9 @@ import (
 	"os"
 	"runtime/debug"
 
+	"github.com/hiraking/click-up-cli/cmd/clickup/task"
+	configcmd "github.com/hiraking/click-up-cli/cmd/clickup/config"
+	timecmd "github.com/hiraking/click-up-cli/cmd/clickup/time"
 	"github.com/spf13/cobra"
 )
 
@@ -33,13 +36,9 @@ func main() {
 
 	rootCmd.PersistentFlags().StringVar(&configPath, "config", "", "config file path (default: ~/.clickup/config.json)")
 
-	rootCmd.AddCommand(newGetTaskCmd())
-	rootCmd.AddCommand(newGetTasksCmd())
-	rootCmd.AddCommand(newCreateTaskCmd())
-	rootCmd.AddCommand(newUpdateTaskCmd())
-	rootCmd.AddCommand(newDeleteTaskCmd())
-	rootCmd.AddCommand(newTimeReportCmd())
-	rootCmd.AddCommand(newShowConfigCmd())
+	rootCmd.AddCommand(task.NewCmd(&configPath))
+	rootCmd.AddCommand(timecmd.NewCmd(&configPath))
+	rootCmd.AddCommand(configcmd.NewCmd(&configPath))
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
