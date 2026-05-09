@@ -37,6 +37,7 @@ func main() {
 	rootCmd.AddCommand(newGetTasksCmd())
 	rootCmd.AddCommand(newCreateTaskCmd())
 	rootCmd.AddCommand(newUpdateTaskCmd())
+	rootCmd.AddCommand(newDeleteTaskCmd())
 	rootCmd.AddCommand(newTimeReportCmd())
 	rootCmd.AddCommand(newShowConfigCmd())
 
