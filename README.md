@@ -62,7 +62,7 @@ Use environment variables or the `--config` flag to override the config file.
 **`--config` flag** (available on all subcommands)
 
 ```bash
-clickup --config /path/to/config.json get-tasks
+clickup --config /path/to/config.json task list
 ```
 
 Priority: `--config` flag > `CLICKUP_CONFIG` env var > `~/.clickup/config.json`
@@ -71,12 +71,14 @@ Priority: `--config` flag > `CLICKUP_CONFIG` env var > `~/.clickup/config.json`
 
 ## Commands
 
-### `get-tasks`
+Commands follow a resource-oriented hierarchy: `clickup <resource> <subcommand> [options]`.
+
+### `task list`
 
 Fetches tasks as a tree.
 
 ```
-clickup get-tasks [options]
+clickup task list [options]
 ```
 
 | Option | Type | Description |
@@ -117,24 +119,24 @@ clickup get-tasks [options]
 > - **Timezone:** Datetime strings without an offset (e.g. `"2026-05-01"`, `"2026-05-01T09:00"`) are interpreted using the `timezone` setting from config (default: UTC). Explicit offsets (e.g. `"2026-05-01T00:00:00Z"`) are used as-is.
 
 ```bash
-clickup get-tasks
-clickup get-tasks --list work
-clickup get-tasks --list work --list study
-clickup get-tasks --list work --status active
-clickup get-tasks --due-before 2026-04-21T23:59:59+09:00
-clickup get-tasks --list work --no-subtasks
-clickup get-tasks --archived
-clickup get-tasks --query "design"
+clickup task list
+clickup task list --list work
+clickup task list --list work --list study
+clickup task list --list work --status active
+clickup task list --due-before 2026-04-21T23:59:59+09:00
+clickup task list --list work --no-subtasks
+clickup task list --archived
+clickup task list --query "design"
 ```
 
 ---
 
-### `create-task`
+### `task create`
 
 Creates a new task.
 
 ```
-clickup create-task <name> --list <name> [options]
+clickup task create <name> --list <name> [options]
 ```
 
 | Argument/Option | Type | Description |
@@ -150,12 +152,12 @@ clickup create-task <name> --list <name> [options]
 | `--time-estimate <minutes>` | int | Time estimate in minutes |
 | `--task-type <name>` | string | Task type name as defined in `taskTypes` config (case-sensitive). |
 
-**Output:** `TaskSummary` object of the created task (same shape as `get-task`).
+**Output:** `TaskSummary` object of the created task (same shape as `task get`).
 
 ```bash
-clickup create-task "My task" --list work
+clickup task create "My task" --list work
 
-clickup create-task "Write design doc" --list work \
+clickup task create "Write design doc" --list work \
   --description "Architecture design" \
   --parent "86exa7yq5" \
   --status "to do" \
@@ -164,21 +166,21 @@ clickup create-task "Write design doc" --list work \
   --start-date "2026-04-25T09:00" \
   --time-estimate 120
 
-clickup create-task "Q2 Plan" --list work --task-type milestone
+clickup task create "Q2 Plan" --list work --task-type milestone
 ```
 
 ---
 
-### `get-task`
+### `task get`
 
 Fetches a single task by ID.
 
 ```
-clickup get-task <taskId>
+clickup task get <taskId>
 ```
 
 ```bash
-clickup get-task 86exa7yq5
+clickup task get 86exa7yq5
 ```
 
 ```json
@@ -201,12 +203,12 @@ clickup get-task 86exa7yq5
 
 ---
 
-### `update-task`
+### `task update`
 
 Updates a task. Only specified fields are changed.
 
 ```
-clickup update-task <taskId> [options]
+clickup task update <taskId> [options]
 ```
 
 | Option | Type | Description |
@@ -226,27 +228,27 @@ clickup update-task <taskId> [options]
 > `name` and `parent` cannot be cleared (`name` is required by the API; removing a subtask's parent is not supported).
 > `--archive` and `--unarchive` are mutually exclusive and cannot be used together.
 
-**Output:** `TaskSummary` object of the updated task (same shape as `get-task`).
+**Output:** `TaskSummary` object of the updated task (same shape as `task get`).
 
 ```bash
-clickup update-task 86exa7yq5 --name "New name"
-clickup update-task 86exa7yq5 --status "in progress" --priority high
-clickup update-task 86exa7yq5 --clear due-date
-clickup update-task 86exa7yq5 --name "New name" --clear description
-clickup update-task 86exa7yq5 --clear due-date --clear priority
-clickup update-task 86exa7yq5 --archive
-clickup update-task 86exa7yq5 --unarchive
-clickup update-task 86exa7yq5 --archive --status done
+clickup task update 86exa7yq5 --name "New name"
+clickup task update 86exa7yq5 --status "in progress" --priority high
+clickup task update 86exa7yq5 --clear due-date
+clickup task update 86exa7yq5 --name "New name" --clear description
+clickup task update 86exa7yq5 --clear due-date --clear priority
+clickup task update 86exa7yq5 --archive
+clickup task update 86exa7yq5 --unarchive
+clickup task update 86exa7yq5 --archive --status done
 ```
 
 ---
 
-### `delete-task`
+### `task delete`
 
 Deletes a task by ID. No confirmation is required.
 
 ```
-clickup delete-task <taskId>
+clickup task delete <taskId>
 ```
 
 **Output:**
@@ -259,17 +261,17 @@ clickup delete-task <taskId>
 ```
 
 ```bash
-clickup delete-task 86exa7yq5
+clickup task delete 86exa7yq5
 ```
 
 ---
 
-### `time-report`
+### `time report`
 
 Aggregates time entries for a period and outputs a JSON report grouped by List → Task → Breakdown.
 
 ```
-clickup time-report --start <ISO8601> --end <ISO8601> [options]
+clickup time report --start <ISO8601> --end <ISO8601> [options]
 ```
 
 | Option | Type | Description |
@@ -281,18 +283,18 @@ clickup time-report --start <ISO8601> --end <ISO8601> [options]
 
 ```bash
 # Weekly report to stdout (no rows)
-clickup time-report \
+clickup time report \
   --start "2026-04-27T00:00:00+09:00" \
   --end   "2026-05-04T00:00:00+09:00"
 
 # Save to file (rows included by default)
-clickup time-report \
+clickup time report \
   --start "2026-04-27T00:00:00+09:00" \
   --end   "2026-05-04T00:00:00+09:00" \
   --output report.json
 
 # Save to file, explicitly exclude rows
-clickup time-report \
+clickup time report \
   --start "2026-04-27T00:00:00+09:00" \
   --end   "2026-05-04T00:00:00+09:00" \
   --output report.json \
@@ -358,13 +360,13 @@ clickup time-report \
 
 ---
 
-### `show-config`
+### `config show`
 
 Prints the resolved configuration as JSON. The API key is masked, showing only the last 4 characters.
 
 ```
-clickup show-config
-clickup --config /path/to/other-config.json show-config
+clickup config show
+clickup --config /path/to/other-config.json config show
 ```
 
 ```json
