@@ -33,6 +33,7 @@ type ClickUpClient interface {
 	GetTask(ctx context.Context, taskID string) (models.TaskSummary, error)
 	CreateTask(ctx context.Context, listID string, req models.CreateTaskRequest) (models.TaskSummary, error)
 	UpdateTask(ctx context.Context, taskID string, req models.UpdateTaskRequest) (models.TaskSummary, error)
+	DeleteTask(ctx context.Context, taskID string) error
 	GetTimeEntries(ctx context.Context, teamID string, opts GetTimeEntriesOptions) ([]models.TimeEntry, error)
 }
 
@@ -171,6 +172,29 @@ func (c *httpClient) UpdateTask(ctx context.Context, taskID string, req models.U
 		return models.TaskSummary{}, fmt.Errorf("failed to decode response: %w", err)
 	}
 	return toSummary(raw), nil
+}
+
+func (c *httpClient) DeleteTask(ctx context.Context, taskID string) error {
+	rawURL := c.base + "v2/task/" + taskID
+
+	respBody, status, err := c.doWithRetry(ctx, func() (*http.Request, error) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodDelete, rawURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", c.apiKey)
+		return req, nil
+	})
+	if err != nil {
+		return err
+	}
+	if status == http.StatusNotFound {
+		return ErrNotFound
+	}
+	if status >= 400 {
+		return fmt.Errorf("HTTP Error (%d): %s", status, string(respBody))
+	}
+	return nil
 }
 
 func (c *httpClient) GetTimeEntries(ctx context.Context, teamID string, opts GetTimeEntriesOptions) ([]models.TimeEntry, error) {
