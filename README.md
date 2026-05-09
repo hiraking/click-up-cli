@@ -218,6 +218,8 @@ clickup update-task <taskId> [options]
 | `--time-estimate <minutes>` | int | New time estimate in minutes |
 | `--parent <taskId>` | string | New parent task ID |
 | `--clear <field>` | string | Clear a field (repeatable). Clearable fields: `description`, `status`, `priority`, `due-date`, `start-date`, `time-estimate` |
+| `--archive` | flag | Archive the task |
+| `--unarchive` | flag | Unarchive the task |
 
 > `name` and `parent` cannot be cleared (`name` is required by the API; removing a subtask's parent is not supported).
 
@@ -229,6 +231,32 @@ clickup update-task 86exa7yq5 --status "in progress" --priority high
 clickup update-task 86exa7yq5 --clear due-date
 clickup update-task 86exa7yq5 --name "New name" --clear description
 clickup update-task 86exa7yq5 --clear due-date --clear priority
+clickup update-task 86exa7yq5 --archive
+clickup update-task 86exa7yq5 --unarchive
+clickup update-task 86exa7yq5 --archive --status done
+```
+
+---
+
+### `delete-task`
+
+Deletes a task by ID. No confirmation is required.
+
+```
+clickup delete-task <taskId>
+```
+
+**Output:**
+
+```json
+{
+  "deleted": true,
+  "taskId": "86exa7yq5"
+}
+```
+
+```bash
+clickup delete-task 86exa7yq5
 ```
 
 ---
