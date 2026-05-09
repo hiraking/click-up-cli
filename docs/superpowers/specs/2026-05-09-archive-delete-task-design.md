@@ -1,10 +1,11 @@
 # Archive and Delete Task — Design Spec
 
-**Date:** 2026-05-09
+**Date:** 2026-05-09  
+**Updated:** 2026-05-09 (added `get-tasks --archived` flag)
 
 ## Problem
 
-The CLI currently has no way to archive or delete tasks. These are common task lifecycle operations.
+The CLI currently has no way to archive or delete tasks, and `get-tasks` cannot retrieve archived tasks. These are common task lifecycle operations.
 
 ## Decisions
 
@@ -14,6 +15,7 @@ The CLI currently has no way to archive or delete tasks. These are common task l
 | Delete interface | New `delete-task` command |
 | Delete confirmation | None — immediate deletion (agent/script-friendly) |
 | Delete output | `{"deleted": true, "taskId": "<id>"}` |
+| Get archived tasks | `--archived` flag added to `get-tasks` |
 
 ## Design
 
@@ -54,16 +56,35 @@ clickup delete-task <taskId>
 clickup delete-task 86exa7yq5
 ```
 
+### 3. `get-tasks` — New `--archived` Flag
+
+Add a `--archived` boolean flag:
+
+- `--archived`: sends `archived=true` as a query parameter to the API
+- Default (flag absent): parameter is omitted; API returns non-archived tasks only
+
+```bash
+clickup get-tasks --archived
+clickup get-tasks --archived --list mylist
+clickup get-tasks --archived --status done
+```
+
+The output shape is unchanged — same `TaskSummary` tree.
+
+> **Note:** The `archived` query parameter is documented on `GET /v2/list/{list_id}/task`. The team endpoint (`GET /v2/team/{team_Id}/task`) used by `get-tasks` does not list this parameter in the API reference. However, it has been manually verified to work: passing `archived=true` returns only archived tasks, and the response includes `"archived": true` on each task object.
+
 ## Implementation Plan
 
 | File | Change |
 |---|---|
-| `internal/client/client.go` | Add `DeleteTask(taskId string) error` method; add `Archived *bool` to the update request struct |
+| `internal/client/client.go` | Add `DeleteTask(taskId string) error` method; add `Archived *bool` to the update request struct; add `IncludeArchived bool` to `GetTasksOptions`; pass `archived=true` in `buildGetTasksURL` when set |
 | `cmd/clickup/update_task.go` | Add `--archive` / `--unarchive` flags; validate mutual exclusion; pass `Archived` to client |
 | `cmd/clickup/delete_task.go` | New file — `delete-task` command |
-| `README.md` | Document `--archive`/`--unarchive` in `update-task` section; add `delete-task` section |
+| `cmd/clickup/get_tasks.go` | Add `--archived` BoolVar flag; pass to `GetTasksOptions.IncludeArchived` |
+| `README.md` | Document `--archive`/`--unarchive` in `update-task` section; add `delete-task` section; add `--archived` to `get-tasks` section |
 
 ## API Reference
 
 - **Archive/Unarchive:** `PUT /v2/task/{task_id}` with `{ "archived": true|false }`
 - **Delete:** `DELETE /v2/task/{task_id}` — returns empty body on success
+- **Get archived tasks:** `GET /v2/list/{list_id}/task?archived=true` (documented); `GET /v2/team/{team_Id}/task?archived=true` (used by CLI — not explicitly documented but expected to work)

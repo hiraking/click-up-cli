@@ -45,6 +45,7 @@ type GetTasksOptions struct {
 	DueDateGt       *time.Time
 	DueDateLt       *time.Time
 	Query           string
+	IncludeArchived bool
 }
 
 // GetTimeEntriesOptions は GetTimeEntries のオプション。
@@ -339,6 +340,9 @@ func (c *httpClient) buildGetTasksURL(teamID string, opts GetTasksOptions, page 
 	}
 	if opts.DueDateLt != nil {
 		params.Set("due_date_lt", strconv.FormatInt(opts.DueDateLt.UnixMilli(), 10))
+	}
+	if opts.IncludeArchived {
+		params.Set("archived", "true")
 	}
 	return c.base + "v2/team/" + teamID + "/task?" + params.Encode()
 }

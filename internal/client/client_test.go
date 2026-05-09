@@ -79,3 +79,21 @@ func TestFilterByQuery_NoFalsePositiveAcrossFields(t *testing.T) {
 	result := filterByQuery(tasks, "bug l")
 	assert.Empty(t, result)
 }
+
+func TestBuildGetTasksURL_IncludeArchived(t *testing.T) {
+	c := &httpClient{base: "https://api.clickup.com/api/"}
+	opts := GetTasksOptions{
+		IncludeArchived: true,
+	}
+	url := c.buildGetTasksURL("123", opts, 0)
+	assert.Contains(t, url, "archived=true")
+}
+
+func TestBuildGetTasksURL_NoArchived(t *testing.T) {
+	c := &httpClient{base: "https://api.clickup.com/api/"}
+	opts := GetTasksOptions{
+		IncludeArchived: false,
+	}
+	url := c.buildGetTasksURL("123", opts, 0)
+	assert.NotContains(t, url, "archived")
+}

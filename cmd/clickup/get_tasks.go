@@ -18,6 +18,7 @@ func newGetTasksCmd() *cobra.Command {
 	var dueBeforeStr string
 	var noSubtasks bool
 	var query string
+	var includeArchived bool
 
 	cmd := &cobra.Command{
 		Use:   "get-tasks",
@@ -66,6 +67,7 @@ func newGetTasksCmd() *cobra.Command {
 				DueDateGt:       dueDateGt,
 				DueDateLt:       dueDateLt,
 				Query:           query,
+				IncludeArchived: includeArchived,
 			})
 			if err != nil {
 				return err
@@ -86,6 +88,8 @@ func newGetTasksCmd() *cobra.Command {
 		"Exclude subtasks from results.")
 	cmd.Flags().StringVar(&query, "query", "",
 		"Case-insensitive substring to match against task name and description. Filtering is performed client-side after fetching all pages.")
+	cmd.Flags().BoolVar(&includeArchived, "archived", false,
+		"Include archived tasks only.")
 
 	return cmd
 }
