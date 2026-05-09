@@ -222,6 +222,7 @@ clickup update-task <taskId> [options]
 | `--unarchive` | flag | Unarchive the task |
 
 > `name` and `parent` cannot be cleared (`name` is required by the API; removing a subtask's parent is not supported).
+> `--archive` and `--unarchive` are mutually exclusive and cannot be used together.
 
 **Output:** `TaskSummary` object of the updated task (same shape as `get-task`).
 
