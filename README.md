@@ -86,7 +86,7 @@ clickup get-tasks [options]
 | `--due-after <ISO8601>` | string | Only tasks with a due date after this datetime. Timezone-less values use the `timezone` from config (default UTC). |
 | `--due-before <ISO8601>` | string | Only tasks with a due date before this datetime. Timezone-less values use the `timezone` from config (default UTC). |
 | `--no-subtasks` | flag | Exclude subtasks (default: included) |
-| `--archived` | bool | Include archived tasks only. |
+| `--archived` | flag | Return archived tasks only (non-archived tasks are excluded). |
 | `--query <text>` | string | Case-insensitive substring filter on task name and description (client-side, applied after all pages are fetched) |
 
 **Output:** JSON array of root tasks. Subtasks are nested under each task's `subtasks` field.

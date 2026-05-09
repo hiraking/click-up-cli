@@ -89,7 +89,7 @@ func newGetTasksCmd() *cobra.Command {
 	cmd.Flags().StringVar(&query, "query", "",
 		"Case-insensitive substring to match against task name and description. Filtering is performed client-side after fetching all pages.")
 	cmd.Flags().BoolVar(&includeArchived, "archived", false,
-		"Include archived tasks only.")
+		"Return archived tasks only (non-archived tasks are excluded).")
 
 	return cmd
 }
